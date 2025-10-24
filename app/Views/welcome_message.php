@@ -222,7 +222,9 @@
             </li>
         </ul>
     </div>
-
+        <div>
+            <h1>'Esta es una prueba' </h1>
+        </div>
     <div class="heroe">
 
         <h1>Welcome to CodeIgniter <?= CodeIgniter\CodeIgniter::CI_VERSION ?></h1>
