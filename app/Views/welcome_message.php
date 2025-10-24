@@ -6,6 +6,7 @@
     <title>Bienvenido a FC Encomiendas</title>
     <meta name="description" content="The small framework with powerful features">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
     <link rel="shortcut icon" type="image/png" href="/favicon.ico">
 
@@ -68,7 +69,8 @@
             margin: 5px 0;
             height: 38px;
             line-height: 36px;
-            padding: .4rem .65rem;
+            width: 160px;
+            /* padding: .4rem .65rem; */
             text-align: center;
         }
 
@@ -191,12 +193,12 @@
         }
 
         footer {
-            background-color: rgba(221, 72, 20, .8);
+            background-color: rgba(18, 104, 185, 0.2);
             text-align: center;
         }
 
         footer .environment {
-            color: rgba(255, 255, 255, 1);
+            color: rgba(83, 81, 81, 1);
             padding: 2rem 1.75rem;
         }
 
@@ -273,8 +275,10 @@
             header li.menu-item a {
                 text-align: center;
                 width: 100%;
-                display: block;
-                padding: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 44px;
                 color: rgba(0, 0, 0, 0.8);
                 font-weight: 500;
                 background-color: rgba(42, 136, 212, 0.1);
@@ -319,11 +323,11 @@
                 <li class="menu-item"><a href="#">Nuestras rutas</a></li>
                 <li class="menu-item"><a href="#" target="_blank">Ubicación</a></li>
                 <li class="menu-item"><a href="#" target="_blank">Quienes somos</a></li>
-                <li class="menu-item"><a href="#" target="_blank">Iniciar sesión</a></li>
+                <li class="menu-item"><a href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Iniciar sesión</a></li>
             </ul>
         </div>
         <div class="heroe bienvenida-encomiendas">
-            <h1>¡Bienvenido a Tu Aliado Logístico! 🚀</h1>
+            <h1>¡Bienvenido a tu aliado logístico! 🚀</h1>
             <h2>Servicios de Encomienda Rápidos y Seguros</h2>
             <p>Estamos comprometidos a conectar tus envíos con sus destinos de manera eficiente y confiable.</p>
         </div>
@@ -380,9 +384,14 @@
 
     </footer>
 
-    <!-- SCRIPTS -->
+    <!-- Include del Modal de Login -->
+    <?= $this->include('modals/login') ?>
 
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script {csp-script-nonce}>
+        // Script para el menú
         document.getElementById("menuToggle").addEventListener('click', toggleMenu);
         
         function toggleMenu() {
@@ -406,9 +415,9 @@
                 menuButton.setAttribute("aria-expanded", "false");
             }
         });
-    </script>
 
-    <!-- -->
+
+    </script>
 
 </body>
 
