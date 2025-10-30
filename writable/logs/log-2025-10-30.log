@@ -1,0 +1,46 @@
+CRITICAL - 2025-10-30 00:08:53 --> ErrorException: Attempt to read property "user_password" on array
+[Method: POST, Route: auth/login]
+in APPPATH\Controllers\AuthController.php on line 37.
+ 1 APPPATH\Controllers\AuthController.php(37): CodeIgniter\Debug\Exceptions->errorHandler(2, 'Attempt to read property "user_password" on array', 'C:\\xampp\\htdocs\\fcencomiendas\\app\\Controllers\\AuthController.php', 37)
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\AuthController->login()
+ 3 SYSTEMPATH\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AuthController))
+ 4 SYSTEMPATH\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-10-30 00:14:59 --> CodeIgniter\Exceptions\BadMethodCallException: Call to undefined method App\Models\UserModel::login
+[Method: POST, Route: auth/login]
+in SYSTEMPATH\Model.php on line 927.
+ 1 APPPATH\Controllers\AuthController.php(25): CodeIgniter\Model->__call('login', [])
+ 2 SYSTEMPATH\CodeIgniter.php(933): App\Controllers\AuthController->login()
+ 3 SYSTEMPATH\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\AuthController))
+ 4 SYSTEMPATH\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 5 SYSTEMPATH\Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 6 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 7 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-10-30 00:17:49 --> TypeError: array_key_exists(): Argument #1 ($key) must be a valid array offset type
+[Method: GET, Route: /]
+in SYSTEMPATH\Filters\Filters.php on line 401.
+ 1 SYSTEMPATH\Filters\Filters.php(401): array_key_exists([...], [...])
+ 2 SYSTEMPATH\Filters\Filters.php(319): CodeIgniter\Filters\Filters->getRequiredFilters('before')
+ 3 SYSTEMPATH\Filters\Filters.php(353): CodeIgniter\Filters\Filters->getRequiredClasses('before')
+ 4 SYSTEMPATH\CodeIgniter.php(387): CodeIgniter\Filters\Filters->runRequired('before')
+ 5 SYSTEMPATH\CodeIgniter.php(347): CodeIgniter\CodeIgniter->runRequiredBeforeFilters(Object(CodeIgniter\Filters\Filters))
+ 6 SYSTEMPATH\Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 7 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 8 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-10-30 00:18:02 --> TypeError: array_key_exists(): Argument #1 ($key) must be a valid array offset type
+[Method: GET, Route: logout]
+in SYSTEMPATH\Filters\Filters.php on line 401.
+ 1 SYSTEMPATH\Filters\Filters.php(401): array_key_exists([...], [...])
+ 2 SYSTEMPATH\Filters\Filters.php(319): CodeIgniter\Filters\Filters->getRequiredFilters('before')
+ 3 SYSTEMPATH\Filters\Filters.php(353): CodeIgniter\Filters\Filters->getRequiredClasses('before')
+ 4 SYSTEMPATH\CodeIgniter.php(387): CodeIgniter\Filters\Filters->runRequired('before')
+ 5 SYSTEMPATH\CodeIgniter.php(347): CodeIgniter\CodeIgniter->runRequiredBeforeFilters(Object(CodeIgniter\Filters\Filters))
+ 6 SYSTEMPATH\Boot.php(363): CodeIgniter\CodeIgniter->run()
+ 7 SYSTEMPATH\Boot.php(68): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+ 8 FCPATH\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+CRITICAL - 2025-10-30 00:25:38 --> ErrorException: Type of Config\Filters::$globals must be array (as in class CodeIgniter\Config\Filters)
+[Method: GET, Route: /]
+in APPPATH\Config\Filters.php on line 16.
+ 1 [internal function]: CodeIgniter\Debug\Exceptions->shutdownHandler()
