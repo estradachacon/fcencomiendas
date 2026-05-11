@@ -5,7 +5,6 @@ namespace App\Controllers\Api;
 use App\Controllers\BaseController;
 use App\Models\UserModel;
 use App\Models\PermisoRolModel;
-use App\Models\PackageModel;
 
 class SyncController extends BaseController
 {
@@ -181,6 +180,123 @@ class SyncController extends BaseController
             'page'     => $page,
             'per_page' => $perPage,
             'pages'    => (int)ceil($total / $perPage),
+        ]);
+    }
+
+    public function packageDetail($id)
+    {
+        $db = db_connect();
+
+        $row = $db->table('packages p')
+            ->select('
+                p.*,
+                s.seller                    AS seller_name,
+                u.user_name                 AS creador_nombre,
+                ru.user_name                AS remu_user_nombre,
+                sp.point_name               AS puntofijo_nombre,
+                ac.name                     AS pago_cuenta_nombre,
+                col.nombre                  AS colonia_nombre,
+                mun.nombre                  AS municipio_nombre,
+                dep.nombre                  AS departamento_nombre,
+                el.nombre                   AS external_location_nombre
+            ')
+            ->join('sellers s',             's.id  = p.vendedor',               'left')
+            ->join('users u',               'u.id  = p.user_id',                'left')
+            ->join('users ru',              'ru.id = p.remu_user_id',           'left')
+            ->join('settled_points sp',     'sp.id = p.id_puntofijo',           'left')
+            ->join('accounts ac',           'ac.id = p.pago_cuenta',            'left')
+            ->join('colonias col',          'col.id = p.colonia_id',            'left')
+            ->join('municipios mun',        'mun.id = col.municipio_id',        'left')
+            ->join('departamentos dep',     'dep.id = mun.departamento_id',     'left')
+            ->join('external_locations el', 'el.id  = p.external_location_id',  'left')
+            ->where('p.id', (int)$id)
+            ->get()
+            ->getRowArray();
+
+        if (!$row) {
+            return $this->response->setStatusCode(404)->setJSON([
+                'success' => false,
+                'message' => 'Paquete no encontrado',
+            ]);
+        }
+
+        // Foto URL
+        $fotoUrl = null;
+        if (!empty($row['foto'])) {
+            $fotoUrl = base_url('upload/paquetes/' . $row['foto']);
+        }
+
+        // Destino y fecha de entrega según tipo_servicio
+        $tipoServicio = (int)$row['tipo_servicio'];
+        $destino      = null;
+        $ubicacion    = null;
+        $fechaEntrega = null;
+
+        switch ($tipoServicio) {
+            case 1:
+                $destino      = $row['puntofijo_nombre'];
+                $fechaEntrega = $row['fecha_entrega_puntofijo'];
+                break;
+            case 2:
+                $destino      = $row['destino_personalizado'];
+                $fechaEntrega = $row['fecha_entrega_personalizado'];
+                $partes = array_filter([
+                    $row['departamento_nombre'],
+                    $row['municipio_nombre'],
+                    $row['colonia_nombre'],
+                ]);
+                $ubicacion = implode(' → ', $partes) ?: null;
+                break;
+            case 3:
+                $destino      = $row['lugar_recolecta_paquete'];
+                $fechaEntrega = $row['fecha_entrega_personalizado'];
+                break;
+            case 4:
+                $destino      = $row['external_location_nombre'];
+                $fechaEntrega = null;
+                break;
+        }
+
+        $data = [
+            'id'                       => (int)$row['id'],
+            'cliente'                  => $row['cliente'],
+            'seller_name'              => $row['seller_name']         ?? '',
+            'creador_nombre'           => $row['creador_nombre']       ?? '',
+            'remu_user_nombre'         => $row['remu_user_nombre']     ?? '',
+            'tipo_servicio'            => $tipoServicio,
+            'estatus'                  => $row['estatus'],
+            'estatus2'                 => $row['estatus2'],
+            'monto'                    => (float)$row['monto'],
+            'flete_total'              => (float)$row['flete_total'],
+            'flete_pagado'             => (float)$row['flete_pagado'],
+            'flete_pendiente'          => (float)$row['flete_pendiente'],
+            'amount_paid'              => (float)($row['amount_paid'] ?? 0),
+            'toggle_pago_parcial'      => $row['toggle_pago_parcial'],
+            'fragil'                   => (bool)$row['fragil'],
+            'comentarios'              => $row['comentarios'],
+            'foto_url'                 => $fotoUrl,
+            'reenvios'                 => (int)$row['reenvios'],
+            'destino'                  => $destino,
+            'ubicacion'                => $ubicacion,
+            'fecha_entrega'            => $fechaEntrega,
+            'fecha_ingreso'            => $row['fecha_ingreso'],
+            'fecha_pack_entregado'     => $row['fecha_pack_entregado'],
+            'pago_cuenta_nombre'       => $row['pago_cuenta_nombre']  ?? '',
+            'metodo_remu'              => $row['metodo_remu'],
+            'fecha_remu'               => $row['fecha_remu'],
+            'cliente_pago_directo'     => $row['cliente_pago_directo'],
+            'fecha_cliente_pago'       => $row['fecha_cliente_pago'],
+            'motivo_no_cobro'          => $row['motivo_no_cobro'],
+            'nocobrar_pack_cancelado'  => $row['nocobrar_pack_cancelado'],
+            'flete_rendido'            => (int)($row['flete_rendido'] ?? 0),
+            'branch'                   => $row['branch'],
+            'created_at'               => $row['created_at'],
+            'updated_at'               => $row['updated_at'],
+        ];
+
+        return $this->response->setJSON([
+            'success' => true,
+            'data'    => $data,
         ]);
     }
 }
