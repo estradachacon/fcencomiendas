@@ -325,19 +325,17 @@ class SyncController extends BaseController
     public function packagesBySeller(int $sellerId)
     {
         $db   = db_connect();
-        $rows = $db->table('packages')
-            ->select('id, cliente,
-                COALESCE(monto, 0)           AS monto,
-                COALESCE(flete_pendiente, 0) AS flete_pendiente,
-                foto, fecha_pack_entregado, updated_at, fecha_ingreso')
-            ->where('vendedor', (int)$sellerId)
-            ->where('estatus', 'entregado')
-            ->groupStart()
-                ->where('monto >', 0)
-                ->orWhere('flete_pendiente >', 0)
-            ->groupEnd()
-            ->orderBy('fecha_ingreso', 'ASC')
-            ->get()->getResultArray();
+        $rows = $db->query("
+            SELECT id, cliente,
+                   COALESCE(monto, 0)           AS monto,
+                   COALESCE(flete_pendiente, 0) AS flete_pendiente,
+                   foto, fecha_pack_entregado, fecha_ingreso
+            FROM packages
+            WHERE vendedor = ?
+              AND estatus  = 'entregado'
+              AND monto    > 0
+            ORDER BY fecha_ingreso ASC
+        ", [(int)$sellerId])->getResultArray();
 
         $data = array_map(function ($r) {
             return [
@@ -358,17 +356,18 @@ class SyncController extends BaseController
     public function fletesPendientes(int $sellerId)
     {
         $db   = db_connect();
-        $rows = $db->table('packages')
-            ->select('id, cliente, flete_pendiente, foto, estatus, fecha_ingreso, monto')
-            ->where('vendedor', (int)$sellerId)
-            ->where('flete_rendido', 0)
-            ->where('COALESCE(flete_pendiente,0) >', 0)
-            ->groupStart()
-                ->where('estatus !=', 'entregado')
-                ->orWhere('monto <=', 0)
-            ->groupEnd()
-            ->orderBy('fecha_ingreso', 'ASC')
-            ->get()->getResultArray();
+        $rows = $db->query("
+            SELECT id, cliente,
+                   COALESCE(flete_pendiente, 0) AS flete_pendiente,
+                   foto, estatus, fecha_ingreso,
+                   COALESCE(monto, 0) AS monto
+            FROM packages
+            WHERE vendedor      = ?
+              AND flete_rendido  = 0
+              AND flete_pendiente > 0
+              AND (estatus <> 'entregado' OR monto <= 0 OR monto IS NULL)
+            ORDER BY fecha_ingreso ASC
+        ", [(int)$sellerId])->getResultArray();
 
         $data = array_map(function ($r) {
             return [
