@@ -118,9 +118,6 @@ class AuthController extends BaseController
             $user_id
         );
 
-        // 3️⃣ Ejecutar backup automático (asincronamente sin bloquear)
-        $this->ejecutarBackupAsincrono();
-
         // 4️⃣ Destruir sesión COMPLETA
         $session->destroy();
 
