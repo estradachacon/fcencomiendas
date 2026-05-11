@@ -22,10 +22,15 @@ $routes->group('auth', function ($routes) {
 });
 
 // RUTAS PARA API DE APP
-$routes->get('api/sync/users',              'Api\SyncController::users');
-$routes->get('api/sync/packages',           'Api\SyncController::packages');
-$routes->get('api/sync/packages/(:num)',    'Api\SyncController::packageDetail/$1');
-$routes->post('api/save-token',             'Api\SyncController::saveToken');
+$routes->get('api/sync/users',                      'Api\SyncController::users');
+$routes->get('api/sync/packages',                   'Api\SyncController::packages');
+$routes->get('api/sync/packages/(:num)',             'Api\SyncController::packageDetail/$1');
+$routes->get('api/sync/sellers',                    'Api\SyncController::sellers');
+$routes->get('api/sync/packages-by-seller/(:num)',  'Api\SyncController::packagesBySeller/$1');
+$routes->get('api/sync/fletes-pendientes/(:num)',   'Api\SyncController::fletesPendientes/$1');
+$routes->get('api/sync/accounts',                   'Api\SyncController::accounts');
+$routes->post('api/payments/pay-by-account',        'Api\PaymentApiController::paySellerByAccount');
+$routes->post('api/save-token',                     'Api\SyncController::saveToken');
 
 $routes->group('', ['filter' => 'auth'], function ($routes) {    // Grupo del Dashboard (requiere autenticación)
     $routes->get('/dashboard', 'DashboardController::index'); // Página principal del dashboard

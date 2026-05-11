@@ -142,36 +142,34 @@ class SyncController extends BaseController
         $total   = $builder->countAllResults(false);
         $rows    = $builder->limit($perPage, $offset)->get()->getResultArray();
 
-        $data = array_map(function ($r) {
-            return [
-                'id'                         => (int)$r['id'],
-                'cliente'                    => $r['cliente'],
-                'vendedor_id'                => (int)$r['vendedor_id'],
-                'seller_name'                => $r['seller_name'] ?? '',
-                'tipo_servicio'              => $r['tipo_servicio'],
-                'fecha_ingreso'              => $r['fecha_ingreso'],
-                'estatus'                    => $r['estatus'],
-                'estatus2'                   => $r['estatus2'],
-                'monto'                      => (float)$r['monto'],
-                'flete_total'                => (float)$r['flete_total'],
-                'flete_pagado'               => (float)$r['flete_pagado'],
-                'flete_pendiente'            => (float)$r['flete_pendiente'],
-                'fragil'                     => (bool)$r['fragil'],
-                'comentarios'                => $r['comentarios'],
-                'foto'                       => $r['foto'],
-                'reenvios'                   => (int)$r['reenvios'],
-                'destino_personalizado'      => $r['destino_personalizado'],
-                'puntofijo_nombre'           => $r['puntofijo_nombre'] ?? '',
-                'branch'                     => $r['branch'],
-                'branch_name'                => $r['branch_name'] ?? '',
-                'external_location_nombre'   => $r['external_location_nombre'] ?? '',
-                'fecha_pack_entregado'       => $r['fecha_pack_entregado'],
-                'fecha_entrega_personalizado'=> $r['fecha_entrega_personalizado'],
-                'fecha_entrega_puntofijo'    => $r['fecha_entrega_puntofijo'],
-                'created_at'                 => $r['created_at'],
-                'updated_at'                 => $r['updated_at'],
-            ];
-        }, $rows);
+        $data = array_map(fn($r) => [
+            'id'                          => (int)$r['id'],
+            'cliente'                     => $r['cliente'],
+            'vendedor_id'                 => (int)$r['vendedor_id'],
+            'seller_name'                 => $r['seller_name'] ?? '',
+            'tipo_servicio'               => $r['tipo_servicio'],
+            'fecha_ingreso'               => $r['fecha_ingreso'],
+            'estatus'                     => $r['estatus'],
+            'estatus2'                    => $r['estatus2'],
+            'monto'                       => (float)$r['monto'],
+            'flete_total'                 => (float)$r['flete_total'],
+            'flete_pagado'                => (float)$r['flete_pagado'],
+            'flete_pendiente'             => (float)$r['flete_pendiente'],
+            'fragil'                      => (bool)$r['fragil'],
+            'comentarios'                 => $r['comentarios'],
+            'foto'                        => $r['foto'],
+            'reenvios'                    => (int)$r['reenvios'],
+            'destino_personalizado'       => $r['destino_personalizado'],
+            'puntofijo_nombre'            => $r['puntofijo_nombre'] ?? '',
+            'branch'                      => $r['branch'],
+            'branch_name'                 => $r['branch_name'] ?? '',
+            'external_location_nombre'    => $r['external_location_nombre'] ?? '',
+            'fecha_pack_entregado'        => $r['fecha_pack_entregado'],
+            'fecha_entrega_personalizado' => $r['fecha_entrega_personalizado'],
+            'fecha_entrega_puntofijo'     => $r['fecha_entrega_puntofijo'],
+            'created_at'                  => $r['created_at'],
+            'updated_at'                  => $r['updated_at'],
+        ], $rows);
 
         return $this->response->setJSON([
             'success'  => true,
@@ -183,7 +181,7 @@ class SyncController extends BaseController
         ]);
     }
 
-    public function packageDetail($id)
+    public function packageDetail(int $id)
     {
         $db = db_connect();
 
@@ -298,5 +296,100 @@ class SyncController extends BaseController
             'success' => true,
             'data'    => $data,
         ]);
+    }
+
+    public function sellers()
+    {
+        $q  = $this->request->getGet('q') ?? '';
+        $db = db_connect();
+
+        $builder = $db->table('sellers')->select('id, seller AS name')->where('activo', 1);
+        if ($q !== '') {
+            $builder->like('seller', $q);
+        }
+
+        $rows = $builder->orderBy('seller', 'ASC')->limit(30)->get()->getResultArray();
+
+        return $this->response->setJSON([
+            'success' => true,
+            'data'    => array_map(fn($r) => ['id' => (int)$r['id'], 'name' => $r['name']], $rows),
+        ]);
+    }
+
+    public function packagesBySeller(int $sellerId)
+    {
+        $db   = db_connect();
+        $rows = $db->table('packages')
+            ->select('id, cliente, monto, flete_pendiente, foto, fecha_pack_entregado, fecha_ingreso')
+            ->where('vendedor', (int)$sellerId)
+            ->where('estatus', 'entregado')
+            ->groupStart()
+                ->where('monto >', 0)
+                ->orWhere('flete_pendiente >', 0)
+            ->groupEnd()
+            ->orderBy('fecha_ingreso', 'ASC')
+            ->get()->getResultArray();
+
+        $data = array_map(function ($r) {
+            return [
+                'id'                  => (int)$r['id'],
+                'cliente'             => $r['cliente'],
+                'monto'               => (float)$r['monto'],
+                'flete_pendiente'     => (float)$r['flete_pendiente'],
+                'foto_url'            => !empty($r['foto']) ? base_url('upload/paquetes/' . $r['foto']) : null,
+                'fecha_pack_entregado'=> $r['fecha_pack_entregado'],
+                'fecha_ingreso'       => $r['fecha_ingreso'],
+            ];
+        }, $rows);
+
+        return $this->response->setJSON(['success' => true, 'data' => $data]);
+    }
+
+    public function fletesPendientes(int $sellerId)
+    {
+        $db   = db_connect();
+        $rows = $db->table('packages')
+            ->select('id, cliente, flete_pendiente, foto, estatus, fecha_ingreso, monto')
+            ->where('vendedor', (int)$sellerId)
+            ->where('flete_rendido', 0)
+            ->where('COALESCE(flete_pendiente,0) >', 0)
+            ->groupStart()
+                ->where('estatus !=', 'entregado')
+                ->orWhere('monto <=', 0)
+            ->groupEnd()
+            ->orderBy('fecha_ingreso', 'ASC')
+            ->get()->getResultArray();
+
+        $data = array_map(function ($r) {
+            return [
+                'id'              => (int)$r['id'],
+                'cliente'         => $r['cliente'],
+                'flete_pendiente' => (float)$r['flete_pendiente'],
+                'foto_url'        => !empty($r['foto']) ? base_url('upload/paquetes/' . $r['foto']) : null,
+                'estatus'         => $r['estatus'],
+                'fecha_ingreso'   => $r['fecha_ingreso'],
+            ];
+        }, $rows);
+
+        return $this->response->setJSON(['success' => true, 'data' => $data]);
+    }
+
+    public function accounts()
+    {
+        $db   = db_connect();
+        $rows = $db->table('accounts')
+            ->select('id, name, balance, type')
+            ->where('is_active', 1)
+            ->orderBy('name', 'ASC')
+            ->get()->getResultArray();
+
+        $data = array_map(fn($r) => [
+            'id'      => (int)$r['id'],
+            'name'    => $r['name'],
+            'balance' => (float)$r['balance'],
+            'type'    => $r['type'],
+        ], $rows);
+
+        return $this->response->setJSON(['success' => true, 'data' => $data]);
     }
 }
