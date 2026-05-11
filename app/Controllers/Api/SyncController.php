@@ -320,13 +320,13 @@ class SyncController extends BaseController
     {
         $db   = db_connect();
         $rows = $db->table('packages')
-            ->select('id, cliente, monto, flete_pendiente, foto, fecha_pack_entregado, fecha_ingreso')
+            ->select('id, cliente,
+                COALESCE(monto, 0)           AS monto,
+                COALESCE(flete_pendiente, 0) AS flete_pendiente,
+                foto, fecha_pack_entregado, fecha_ingreso')
             ->where('vendedor', (int)$sellerId)
             ->where('estatus', 'entregado')
-            ->groupStart()
-                ->where('monto >', 0)
-                ->orWhere('flete_pendiente >', 0)
-            ->groupEnd()
+            ->where('monto >', 0)
             ->orderBy('fecha_ingreso', 'ASC')
             ->get()->getResultArray();
 
