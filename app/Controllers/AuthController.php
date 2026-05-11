@@ -118,7 +118,10 @@ class AuthController extends BaseController
             $user_id
         );
 
-        // 3️⃣ Destruir sesión COMPLETA
+        // 3️⃣ Ejecutar backup automático (asincronamente sin bloquear)
+        $this->ejecutarBackupAsincrono();
+
+        // 4️⃣ Destruir sesión COMPLETA
         $session->destroy();
 
         return redirect()->to('/');
@@ -252,5 +255,17 @@ class AuthController extends BaseController
             'success' => true,
             'message' => 'Contraseña actualizada correctamente'
         ]);
+    }
+
+    private function ejecutarBackupAsincrono(): void
+    {
+        $php = PHP_EXECUTABLE ?: 'php';
+        $spark = FCPATH . 'spark';
+
+        if (php_uname('s') === 'Windows NT') {
+            pclose(popen("start /B {$php} {$spark} backup:run > nul 2>&1", 'r'));
+        } else {
+            shell_exec("{$php} {$spark} backup:run > /dev/null 2>&1 &");
+        }
     }
 }
