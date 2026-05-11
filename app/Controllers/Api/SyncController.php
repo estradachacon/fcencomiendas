@@ -48,6 +48,11 @@ class SyncController extends BaseController
                 $permisos[$p['nombre_accion']] = (bool)$p['habilitado'];
             }
 
+            $fotoUrl = null;
+            if (!empty($user['foto'])) {
+                $fotoUrl = base_url('upload/perfiles/' . $user['foto']);
+            }
+
             $data[] = [
                 'id' => (int)$user['id'],
                 'username' => $user['user_name'],
@@ -56,6 +61,7 @@ class SyncController extends BaseController
                 'role_id' => $user['role_id'],
                 'branch_id' => $user['branch_id'],
                 'foto' => $user['foto'],
+                'foto_url' => $fotoUrl,
                 'permisos' => $permisos
             ];
         }
