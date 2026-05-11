@@ -300,10 +300,10 @@ class SyncController extends BaseController
 
     public function sellers()
     {
-        $q  = $this->request->getGet('q') ?? '';
+        $q  = trim($this->request->getGet('q') ?? '');
         $db = db_connect();
 
-        $builder = $db->table('sellers')->select('id, seller AS name')->where('activo', 1);
+        $builder = $db->table('sellers')->select('id, seller AS name');
         if ($q !== '') {
             $builder->like('seller', $q);
         }
