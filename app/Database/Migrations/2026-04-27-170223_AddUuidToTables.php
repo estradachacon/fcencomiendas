@@ -20,8 +20,6 @@ class AddUuidToTables extends Migration
         'notifications',
         'notifications_read',
         'packages',
-        'package_payments',
-        'pagos',
         'permisos_rol',
         'reversal_requests',
         'roles',
