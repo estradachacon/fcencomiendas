@@ -26,7 +26,7 @@ $routes->get('api/sync/users',                      'Api\SyncController::users')
 $routes->get('api/sync/packages',                   'Api\SyncController::packages');
 $routes->get('api/sync/packages/(:num)',             'Api\SyncController::packageDetail/$1');
 $routes->get('api/sync/sellers',                    'Api\SyncController::sellers');
-$routes->get('api/sync/remuneration-by-account/(:num)', 'Api\SyncController::remunerationByAccount/$1');
+$routes->get('api/sync/remuneration-by-account/(:num)', 'Api\SyncController::remunerationData/$1');
 $routes->get('api/sync/packages-by-seller/(:num)',  'Api\SyncController::packagesBySeller/$1');
 $routes->get('api/sync/fletes-pendientes/(:num)',   'Api\SyncController::fletesPendientes/$1');
 $routes->get('api/sync/accounts',                   'Api\SyncController::accounts');

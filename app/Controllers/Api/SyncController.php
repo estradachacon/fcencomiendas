@@ -467,6 +467,68 @@ class SyncController extends BaseController
         ]);
     }
 
+    public function remunerationData(int $sellerId)
+    {
+        $db = db_connect();
+
+        $packages = $db->query("
+            SELECT id, cliente,
+                   COALESCE(monto, 0)           AS monto,
+                   COALESCE(flete_pendiente, 0) AS flete_pendiente,
+                   foto, fecha_pack_entregado, fecha_ingreso
+            FROM packages
+            WHERE vendedor = ?
+              AND estatus  = 'entregado'
+              AND monto    > 0
+            ORDER BY fecha_ingreso ASC
+        ", [(int)$sellerId])->getResultArray();
+
+        $fletes = $db->query("
+            SELECT id, cliente,
+                   COALESCE(flete_pendiente, 0) AS flete_pendiente,
+                   foto, estatus, fecha_ingreso,
+                   COALESCE(monto, 0) AS monto
+            FROM packages
+            WHERE vendedor     = ?
+              AND flete_rendido = 0
+              AND flete_pendiente > 0
+              AND (estatus <> 'entregado' OR monto <= 0 OR monto IS NULL)
+            ORDER BY fecha_ingreso ASC
+        ", [(int)$sellerId])->getResultArray();
+
+        $mapPackage = function ($r) {
+            return [
+                'id'                   => (int)$r['id'],
+                'cliente'              => $r['cliente'],
+                'monto'                => (float)$r['monto'],
+                'flete_pendiente'      => (float)$r['flete_pendiente'],
+                'foto_url'             => !empty($r['foto']) ? base_url('upload/paquetes/' . $r['foto']) : null,
+                'fecha_pack_entregado' => $r['fecha_pack_entregado'],
+                'fecha_ingreso'        => $r['fecha_ingreso'],
+            ];
+        };
+
+        $mapFlete = function ($r) {
+            return [
+                'id'              => (int)$r['id'],
+                'cliente'         => $r['cliente'],
+                'flete_pendiente' => (float)$r['flete_pendiente'],
+                'monto'           => (float)$r['monto'],
+                'estatus'         => $r['estatus'],
+                'foto_url'        => !empty($r['foto']) ? base_url('upload/paquetes/' . $r['foto']) : null,
+                'fecha_ingreso'   => $r['fecha_ingreso'],
+            ];
+        };
+
+        return $this->response->setJSON([
+            'success'       => true,
+            'packages'      => array_map($mapPackage, $packages),
+            'fletes'        => array_map($mapFlete, $fletes),
+            'package_count' => count($packages),
+            'flete_count'   => count($fletes),
+        ]);
+    }
+
     public function accounts()
     {
         $db   = db_connect();
