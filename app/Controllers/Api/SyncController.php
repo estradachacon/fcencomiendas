@@ -329,10 +329,13 @@ class SyncController extends BaseController
             ->select('id, cliente,
                 COALESCE(monto, 0)           AS monto,
                 COALESCE(flete_pendiente, 0) AS flete_pendiente,
-                foto, fecha_pack_entregado, fecha_ingreso')
+                foto, fecha_pack_entregado, updated_at, fecha_ingreso')
             ->where('vendedor', (int)$sellerId)
             ->where('estatus', 'entregado')
-            ->where('monto >', 0)
+            ->groupStart()
+                ->where('monto >', 0)
+                ->orWhere('flete_pendiente >', 0)
+            ->groupEnd()
             ->orderBy('fecha_ingreso', 'ASC')
             ->get()->getResultArray();
 
@@ -344,6 +347,7 @@ class SyncController extends BaseController
                 'flete_pendiente'     => (float)$r['flete_pendiente'],
                 'foto_url'            => !empty($r['foto']) ? base_url('upload/paquetes/' . $r['foto']) : null,
                 'fecha_pack_entregado'=> $r['fecha_pack_entregado'],
+                'updated_at'          => $r['updated_at'],
                 'fecha_ingreso'       => $r['fecha_ingreso'],
             ];
         }, $rows);
