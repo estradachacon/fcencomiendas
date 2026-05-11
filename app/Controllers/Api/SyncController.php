@@ -382,6 +382,91 @@ class SyncController extends BaseController
         return $this->response->setJSON(['success' => true, 'data' => $data]);
     }
 
+    public function remunerationByAccount(int $sellerId)
+    {
+        $db       = db_connect();
+        $sellerId = (int)$sellerId;
+
+        $packages = $db->query("
+            SELECT
+                id,
+                cliente,
+                COALESCE(monto, 0)           AS monto,
+                COALESCE(flete_pendiente, 0) AS flete_pendiente,
+                foto,
+                fecha_pack_entregado,
+                updated_at,
+                fecha_ingreso
+            FROM packages
+            WHERE vendedor = ?
+              AND estatus = 'entregado'
+              AND (
+                    COALESCE(monto, 0) > 0
+                    OR COALESCE(flete_pendiente, 0) > 0
+                  )
+            ORDER BY fecha_ingreso ASC, id ASC
+        ", [$sellerId])->getResultArray();
+
+        $fletes = $db->query("
+            SELECT
+                id,
+                cliente,
+                COALESCE(flete_pendiente, 0) AS flete_pendiente,
+                COALESCE(monto, 0)           AS monto,
+                foto,
+                estatus,
+                fecha_ingreso
+            FROM packages
+            WHERE vendedor = ?
+              AND COALESCE(flete_rendido, 0) = 0
+              AND COALESCE(flete_pendiente, 0) > 0
+              AND (
+                    estatus <> 'entregado'
+                    OR COALESCE(monto, 0) <= 0
+                  )
+            ORDER BY fecha_ingreso ASC, id ASC
+        ", [$sellerId])->getResultArray();
+
+        $mapPackage = function ($r) {
+            return [
+                'id'                   => (int)$r['id'],
+                'cliente'              => $r['cliente'],
+                'monto'                => (float)$r['monto'],
+                'flete_pendiente'      => (float)$r['flete_pendiente'],
+                'foto'                 => $r['foto'],
+                'foto_url'             => !empty($r['foto']) ? base_url('upload/paquetes/' . $r['foto']) : null,
+                'fecha_pack_entregado' => $r['fecha_pack_entregado'],
+                'updated_at'           => $r['updated_at'],
+                'fecha_ingreso'        => $r['fecha_ingreso'],
+            ];
+        };
+
+        $mapFlete = function ($r) {
+            return [
+                'id'               => (int)$r['id'],
+                'cliente'          => $r['cliente'],
+                'monto'            => (float)$r['monto'],
+                'flete_pendiente'  => (float)$r['flete_pendiente'],
+                'foto'             => $r['foto'],
+                'foto_url'         => !empty($r['foto']) ? base_url('upload/paquetes/' . $r['foto']) : null,
+                'estatus'          => $r['estatus'],
+                'fecha_ingreso'    => $r['fecha_ingreso'],
+            ];
+        };
+
+        $packagesData = array_map($mapPackage, $packages);
+        $fletesData   = array_map($mapFlete, $fletes);
+
+        return $this->response->setJSON([
+            'success'       => true,
+            'seller_id'     => $sellerId,
+            'packages'      => $packagesData,
+            'fletes'        => $fletesData,
+            'package_count' => count($packagesData),
+            'flete_count'   => count($fletesData),
+        ]);
+    }
+
     public function accounts()
     {
         $db   = db_connect();
