@@ -9,7 +9,6 @@ class AddUuidToTables extends Migration
     // Tablas que recibirán UUID
     private array $tables = [
         'accounts',
-        'bitacora_sistema',
         'branches',
         'cashier',
         'cashier_movements',

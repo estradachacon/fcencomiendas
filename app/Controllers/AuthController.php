@@ -253,16 +253,4 @@ class AuthController extends BaseController
             'message' => 'Contraseña actualizada correctamente'
         ]);
     }
-
-    private function ejecutarBackupAsincrono(): void
-    {
-        $php = PHP_EXECUTABLE ?: 'php';
-        $spark = FCPATH . 'spark';
-
-        if (php_uname('s') === 'Windows NT') {
-            pclose(popen("start /B {$php} {$spark} backup:run > nul 2>&1", 'r'));
-        } else {
-            shell_exec("{$php} {$spark} backup:run > /dev/null 2>&1 &");
-        }
-    }
 }

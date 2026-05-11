@@ -15,7 +15,6 @@ class BitacoraSistemaModel extends Model
         'descripcion',
         'referencia_id',
         'ip_address',
-        'uuid',
         'user_agent',
         'created_at',
     ];
