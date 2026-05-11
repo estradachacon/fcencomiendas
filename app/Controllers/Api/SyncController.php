@@ -345,7 +345,6 @@ class SyncController extends BaseController
                 'flete_pendiente'     => (float)$r['flete_pendiente'],
                 'foto_url'            => !empty($r['foto']) ? base_url('upload/paquetes/' . $r['foto']) : null,
                 'fecha_pack_entregado'=> $r['fecha_pack_entregado'],
-                'updated_at'          => $r['updated_at'],
                 'fecha_ingreso'       => $r['fecha_ingreso'],
             ];
         }, $rows);
