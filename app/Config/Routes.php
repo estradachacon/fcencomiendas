@@ -219,6 +219,12 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {    // Grupo del Da
     
     // Rutas para notificaciones
     $routes->get('notifications',                   'NotificationController::index');
-$routes->get('notifications-search',            'NotificationController::searchAjax');
+    $routes->get('notifications-search',            'NotificationController::searchAjax');
     $routes->post('notifications/marcar-leida', 'NotificationController::marcarLeida');
+
+    // Módulo de horarios y control de sesiones
+    $routes->get('horario/sesiones',                    'HorarioController::index');
+    $routes->post('horario/actualizar/(:num)',           'HorarioController::actualizarHorario/$1');
+    $routes->post('horario/forzar-cierre/(:num)',        'HorarioController::forzarCierre/$1');
+    $routes->get('horario/verificar-sesion',             'HorarioController::verificarSesion');
 });

@@ -6,16 +6,19 @@ use App\Controllers\BaseController;
 use App\Models\UserModel;
 use App\Models\PermisoRolModel;
 use App\Models\PasswordResetModel;
+use App\Models\SesionUsuarioModel;
 
 class AuthController extends BaseController
 {
     protected $userModel;
     protected $passwordResetModel;
+    protected $sesionModel;
 
     public function __construct()
     {
-        $this->userModel = new UserModel();
+        $this->userModel        = new UserModel();
         $this->passwordResetModel = new PasswordResetModel();
+        $this->sesionModel      = new SesionUsuarioModel();
     }
     public function login()
     {
@@ -68,6 +71,21 @@ class AuthController extends BaseController
                 'message' => 'Usuario inactivo.'
             ]);
         }
+
+        // Validar restricción de horario antes de permitir el ingreso
+        if (!empty($user['horario_activo']) && (int)$user['horario_activo'] === 1) {
+            $ahora  = date('H:i:s');
+            $inicio = $user['horario_inicio'];
+            $fin    = $user['horario_fin'];
+
+            if ($inicio && $fin && ($ahora < $inicio || $ahora > $fin)) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => "Acceso restringido. Tu horario de trabajo es de {$inicio} a {$fin}.",
+                ]);
+            }
+        }
+
         $user_complete = $userModel->getUserWithRoleAndBranch($user['email']);
         $permisos = $permisoModel->getPermisosPorRol($user['role_id']);
 
@@ -87,6 +105,11 @@ class AuthController extends BaseController
 
         $session->set($sessionData);
 
+        // Limpiar bandera de cierre forzado al reiniciar sesión
+        $userModel->update($user['id'], ['forzar_cierre' => 0]);
+
+        $this->sesionModel->registrar($user['id'], 'login');
+
         registrar_bitacora(
             'Iniciar sesión',
             'Autenticacion',
@@ -105,20 +128,28 @@ class AuthController extends BaseController
     public function logout()
     {
         $session = session();
+        $userId  = (int)$session->get('id');
 
-        // 1️⃣ Guardar datos antes de destruir la sesión
-        $user_id   = $session->get('user_id');
-        $user_name = $session->get('user_name');
+        if ($userId) {
+            // Determinar si fue un cierre forzado para el log
+            $user  = $this->userModel->find($userId);
+            $notas = (!empty($user['forzar_cierre']) && (int)$user['forzar_cierre'] === 1)
+                ? 'Sesión cerrada por solicitud de administrador'
+                : null;
 
-        // 2️⃣ Registrar bitácora
+            $this->sesionModel->registrar($userId, 'logout', $notas);
+
+            // Limpiar bandera de cierre forzado
+            $this->userModel->update($userId, ['forzar_cierre' => 0]);
+        }
+
         registrar_bitacora(
             'Cerrar sesión',
             'Autenticacion',
             'Cerró sesión.',
-            $user_id
+            $userId ?: null
         );
 
-        // 4️⃣ Destruir sesión COMPLETA
         $session->destroy();
 
         return redirect()->to('/');

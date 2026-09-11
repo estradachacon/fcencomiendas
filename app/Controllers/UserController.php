@@ -5,7 +5,6 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\UserModel;
-use App\Services\PushService;
 
 class UserController extends BaseController
 {
@@ -135,11 +134,16 @@ class UserController extends BaseController
                 ->with('errors', $this->validator->getErrors());
         }
 
+        $horarioActivo = (int)$this->request->getPost('horario_activo');
+
         $data = [
-            'user_name' => $this->request->getPost('user_name'),
-            'email' => $this->request->getPost('email'),
-            'branch_id' => $this->request->getPost('branch_id'),
-            'role_id' => $this->request->getPost('role_id'),
+            'user_name'      => $this->request->getPost('user_name'),
+            'email'          => $this->request->getPost('email'),
+            'branch_id'      => $this->request->getPost('branch_id'),
+            'role_id'        => $this->request->getPost('role_id'),
+            'horario_activo' => $horarioActivo,
+            'horario_inicio' => $horarioActivo ? $this->request->getPost('horario_inicio') : null,
+            'horario_fin'    => $horarioActivo ? $this->request->getPost('horario_fin') : null,
         ];
 
         $password = $this->request->getPost('user_password');
@@ -148,9 +152,7 @@ class UserController extends BaseController
         }
 
         $this->userModel->update($id, $data);
-        
-        PushService::send('sync_users');
-        
+
         registrar_bitacora(
             'Editar usuario',
             'Usuarios',

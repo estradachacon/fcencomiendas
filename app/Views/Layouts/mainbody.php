@@ -496,6 +496,60 @@
     })
 </script>
     <?= $this->include('Layouts/toast') ?>
+
+    <?php if ($session->get('logged_in')): ?>
+    <script>
+    (function () {
+        const POLL_URL    = '<?= base_url('horario/verificar-sesion') ?>';
+        const LOGOUT_URL  = '<?= base_url('logout') ?>';
+        const INTERVAL_MS = 30000; // cada 30 segundos
+        let advertenciaActiva = false;
+
+        function verificarSesion() {
+            fetch(POLL_URL, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.forzar) {
+                        // Cierre inmediato: forzado o fuera de horario
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Sesión terminada',
+                            text: data.mensaje || 'Tu sesión ha finalizado.',
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            confirmButtonText: 'Aceptar',
+                            confirmButtonColor: '#d33',
+                        }).then(() => {
+                            window.location.href = LOGOUT_URL;
+                        });
+                        return;
+                    }
+
+                    // Advertencia: quedan 5 minutos o menos
+                    if (data.advertencia && !advertenciaActiva) {
+                        advertenciaActiva = true;
+                        const min = data.minutos_restantes;
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'warning',
+                            title: '⏰ Jornada por terminar',
+                            html: 'Tu jornada laboral termina en <strong>' + min + ' minuto' + (min !== 1 ? 's' : '') + '</strong>.',
+                            showConfirmButton: false,
+                            timer: 20000,
+                            timerProgressBar: true,
+                        }).then(() => { advertenciaActiva = false; });
+                    }
+                })
+                .catch(() => {}); // silenciar errores de red
+        }
+
+        // Primera verificación al cargar la página (después de 5 s para no solapar con el render)
+        setTimeout(verificarSesion, 5000);
+        setInterval(verificarSesion, INTERVAL_MS);
+    })();
+    </script>
+    <?php endif; ?>
 </body>
 
 </html>

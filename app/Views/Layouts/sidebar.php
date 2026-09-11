@@ -265,6 +265,12 @@
                                             <a class="nav-link" href="/roles">Roles</a>
                                         <?php endif; ?>
 
+                                        <?php if (tienePermiso('gestionar_horarios')): ?>
+                                            <a class="nav-link" href="/horario/sesiones">
+                                                <i class="fa-solid fa-clock-rotate-left mr-1"></i> Sesiones
+                                            </a>
+                                        <?php endif; ?>
+
                                     </nav>
                                 </div>
 

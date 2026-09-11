@@ -88,6 +88,7 @@ class Permisos extends BaseConfig
             'eliminar_roles',
             'crear_roles',
             'asignar_permisos',
+            'gestionar_horarios',
         ],
 
         'Permisos InLine' => [
