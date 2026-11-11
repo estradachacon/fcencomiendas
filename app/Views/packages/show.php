@@ -1,76 +1,116 @@
 <?= $this->extend('Layouts/mainbody') ?>
 <?= $this->section('content') ?>
 <style>
-    /* Panel de edición de flete */
+    /* ── Flete editor (Swal) ── */
+    .flete-editor { text-align: left; padding: 10px 5px; }
+    .flete-row    { margin-bottom: 12px; }
+    .flete-label  { font-weight: 600; font-size: 0.9rem; color: #555; margin-bottom: 3px; }
+    .flete-input  { width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid #ced4da; font-size: 0.95rem; }
+    .flete-input:focus { border-color: #007bff; outline: none; box-shadow: 0 0 3px rgba(0,123,255,.4); }
+    .flete-preview { margin-top: 10px; padding: 8px; border-radius: 6px; background: #f8f9fa; font-size: 0.95rem; }
+    .flete-preview strong { color: #dc3545; }
+    .tracking-btn { transition: all .2s ease; }
+    .tracking-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,.15); }
+    .select2-container .select2-selection--single { height: 38px !important; border: 1px solid #ced4da; border-radius: .375rem; }
+    .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 36px !important; padding-left: .75rem; }
 
-    .flete-editor {
-        text-align: left;
-        padding: 10px 5px;
+    /* ── Secciones de la ficha ── */
+    .pkg-section {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 14px;
+        margin-bottom: 16px;
+        overflow: hidden;
     }
-
-    .flete-row {
-        margin-bottom: 12px;
-    }
-
-    .flete-label {
-        font-weight: 600;
-        font-size: 0.9rem;
-        color: #555;
-        margin-bottom: 3px;
-    }
-
-    .flete-input {
-        width: 100%;
-        padding: 6px 8px;
-        border-radius: 6px;
-        border: 1px solid #ced4da;
-        font-size: 0.95rem;
-    }
-
-    .flete-input:focus {
-        border-color: #007bff;
-        outline: none;
-        box-shadow: 0 0 3px rgba(0, 123, 255, 0.4);
-    }
-
-    .flete-preview {
-        margin-top: 10px;
-        padding: 8px;
-        border-radius: 6px;
+    .pkg-section-header {
+        padding: 12px 16px;
         background: #f8f9fa;
-        font-size: 0.95rem;
+        border-bottom: 1px solid #e9ecef;
+        font-weight: 700;
+        font-size: .88rem;
+        color: #495057;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
+    .pkg-section-body { padding: 14px 16px; }
 
-    .flete-preview strong {
-        color: #dc3545;
+    /* ── Filas de dato (dl alternativo) ── */
+    .d-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 7px 0;
+        border-bottom: 1px solid #f5f5f5;
+        font-size: .9rem;
     }
+    .d-row:last-child { border-bottom: none; }
+    .d-lbl { color: #6c757d; font-weight: 600; flex-shrink: 0; min-width: 120px; font-size: .85rem; }
+    .d-val { text-align: right; color: #212529; word-break: break-word; }
 
-    .flete-preview span {
-        font-weight: bold;
-        font-size: 1rem;
+    /* ── Hero header ── */
+    .pkg-hero {
+        background: linear-gradient(135deg, #0e1525, #1d2744);
+        border-radius: 14px;
+        color: #fff;
+        padding: 18px 20px;
+        margin-bottom: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
+    .pkg-hero-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .pkg-id   { font-size: 1.3rem; font-weight: 800; }
+    .pkg-cli  { font-size: 1rem; opacity: .75; }
+    .pkg-hero-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pkg-hero-actions a,
+    .pkg-hero-actions button {
+        background: rgba(255,255,255,.12);
+        color: #fff;
+        border: 1px solid rgba(255,255,255,.22);
+        border-radius: 9px;
+        padding: 7px 14px;
+        font-size: .82rem;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background .15s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .pkg-hero-actions a:hover,
+    .pkg-hero-actions button:hover { background: rgba(255,255,255,.22); color: #fff; }
 
-    .tracking-btn {
-        transition: all .2s ease;
+    /* ── Foto ── */
+    .pkg-foto {
+        width: 100%; border-radius: 10px; object-fit: cover;
+        max-height: 240px; cursor: pointer;
+        border: 1px solid #e9ecef;
+        transition: opacity .15s;
     }
+    .pkg-foto:hover { opacity: .88; }
 
-    .tracking-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    /* ── Tracking móvil ── */
+    .track-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        font-size: .88rem;
     }
-
-    .select2-container .select2-selection--single {
-        height: 38px !important;
-        /* altura estándar Bootstrap */
-        border: 1px solid #ced4da;
-        border-radius: .375rem;
-    }
-
-    .select2-container--default .select2-selection--single .select2-selection__rendered {
-        line-height: 36px !important;
-        /* centra texto */
-        padding-left: .75rem;
-    }
+    .track-card:last-child { margin-bottom: 0; }
+    .track-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
 </style>
 <?php
 /**
@@ -90,431 +130,382 @@ function formatDateDMY($fecha)
 // estén definidas en tus Helpers o estén disponibles globalmente.
 ?>
 
-<div class="row">
-    <div class="col-md-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">Detalle del Paquete #<?= esc($package['id']) ?></h4>
+<?php
+$fotoFile = isset($package['foto']) ? $package['foto'] : null;
+$fotoURL  = (!empty($fotoFile) && $fotoFile !== 'null')
+    ? base_url('upload/paquetes/' . $fotoFile)
+    : base_url('upload/no-image.png');
+?>
+
+<div class="container-fluid px-2 px-md-4 py-3">
+
+    <!-- ══ HERO ══ -->
+    <div class="pkg-hero">
+        <div class="pkg-hero-top">
+            <div>
+                <div class="pkg-id">Paquete #<?= esc($package['id']) ?></div>
+                <div class="pkg-cli"><?= esc($package['cliente']) ?></div>
             </div>
-
-            <div class="card-body">
-
-                <h5 class="text-secondary mb-3 border-bottom pb-1">Información General</h5>
-
-                <div class="row">
-
-                    <div class="col-md-8">
-                        <table class="table table-striped" style="font-size: 1rem;">
-                            <tbody>
-                                <tr>
-                                    <th style="width: 40%">Cliente</th>
-                                    <td><?= esc($package['cliente']) ?></td>
-                                </tr>
-                                <tr>
-                                    <th>Vendedor</th>
-                                    <td>
-                                        <span id="vendedorEdit"
-                                            data-id="<?= $package['id'] ?>"
-                                            data-vendedor="<?= $package['vendedor'] ?>"
-                                            data-nombre="<?= esc($package['seller_name']) ?>">
-
-                                            <?= esc($package['seller_name']) ?>
-                                        </span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Tipo de Servicio</th>
-                                    <td><?= serviceLabel($package['tipo_servicio']) ?></td>
-                                </tr>
-                                <tr>
-                                    <th>Monto</th>
-                                    <td><strong>$<?= number_format($package['monto'], 2) ?></strong></td>
-                                </tr>
-
-                                <tr>
-                                    <th>Estatus</th>
-                                    <td>
-                                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
-
-                                            <div style="display:flex; gap:12px; align-items:center;">
-
-                                                <?php if (!empty($package['estatus'])): ?>
-                                                    <div style="border-right:1px solid #ddd; padding-right:10px;">
-                                                        <?= statusBadge($package['estatus']) ?>
-                                                    </div>
-                                                <?php endif; ?>
-
-                                                <?php if (!empty($package['estatus2'])): ?>
-                                                    <div>
-                                                        <?= statusBadge($package['estatus2']) ?>
-                                                    </div>
-                                                <?php endif; ?>
-
-                                            </div>
-
-                                            <?php if ($package['estatus'] === 'finalizado' && $package['estatus2'] === 'remunerado'): ?>
-                                                <?php if (tienePermiso('solicitar_reversion')): ?>
-                                                    <div>
-                                                        <?php if (!empty($solicitudPendiente)): ?>
-                                                            <span class="badge badge-warning p-2" style="font-size:0.75rem;">
-                                                                <i class="fa-solid fa-clock"></i> Solicitud en proceso
-                                                            </span>
-                                                        <?php else: ?>
-                                                            <button
-                                                                id="btnRevertirPago"
-                                                                class="btn btn-sm btn-warning tracking-btn"
-                                                                data-id="<?= $package['id'] ?>"
-                                                                style="font-size:0.75rem; padding:2px 8px;">
-                                                                <i class="fa-solid fa-rotate-left"></i> Solicitar reversión de Pago
-                                                            </button>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                <?php endif; ?>
-                                            <?php endif; ?>
-
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                <?php if (!empty($package['fecha_remu'])): ?>
-                                    <tr>
-                                        <th>Pago al vendedor</th>
-                                        <td>
-
-                                            <div class="row text-center">
-
-                                                <div class="col-md-4">
-                                                    <small class="text-muted d-block">Fecha</small>
-                                                    <?= formatDateDMY($package['fecha_remu']) ?>
-                                                </div>
-
-                                                <div class="col-md-4">
-                                                    <small class="text-muted d-block">Método</small>
-
-                                                    <?php if ($package['metodo_remu'] == 'caja'): ?>
-                                                        <span class="badge badge-success">Caja</span>
-                                                    <?php elseif ($package['metodo_remu'] == 'cuenta'): ?>
-                                                        <span class="badge badge-primary">Cuenta</span>
-                                                    <?php else: ?>
-                                                        <?= esc($package['metodo_remu']) ?>
-                                                    <?php endif; ?>
-
-                                                </div>
-
-                                                <div class="col-md-4">
-                                                    <small class="text-muted d-block">Usuario</small>
-                                                    <?= esc($package['remu_user_nombre'] ?? 'N/A') ?>
-                                                </div>
-
-                                            </div>
-
-                                        </td>
-                                    </tr>
-                                <?php endif; ?>
-                                <tr>
-                                    <th>Cobro de paquete recibido en cuenta:</th>
-                                    <td>
-
-                                        <?php if (!empty($package['cliente_pago_directo'])): ?>
-
-                                            <span class="text-muted small">
-                                                Valor pagado directamente al vendedor por el cliente, posterior a la recepción.
-                                            </span>
-
-                                        <?php elseif (!empty($package['pago_cuenta_nombre'])): ?>
-
-                                            <span class="badge badge-info">
-                                                <?= esc($package['pago_cuenta_nombre']) ?>
-                                            </span>
-
-                                        <?php else: ?>
-
-                                            <span class="badge badge-light">Pendiente</span>
-
-                                        <?php endif; ?>
-
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>¿Es Frágil?</th>
-                                    <td>
-                                        <?php if (!empty($package['fragil'])): ?>
-                                            <span class="badge badge-danger">SÍ</span>
-                                        <?php else: ?>
-                                            <span class="badge badge-success">NO</span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="col-md-4 text-center">
-                        <?php
-                        $fotoFile = isset($package['foto']) ? $package['foto'] : null;
-                        $fotoURL = (!empty($fotoFile) && $fotoFile !== 'null')
-                            ? base_url('upload/paquetes/' . $fotoFile)
-                            : base_url('upload/no-image.png');
-                        ?>
-                        <img src="<?= esc($fotoURL) ?>" alt="Foto del Paquete"
-                            class="img-thumbnail shadow-sm rounded-lg"
-                            style="width: 100%; max-width: 250px; height: 250px; object-fit: cover; cursor: pointer;"
-                            data-toggle="modal" data-target="#modalFotoPaquete">
-
-                        <p class="text-muted mt-2 small">Click para ver en grande</p>
-                    </div>
-
-                </div>
-
-                <hr class="my-4">
-
-                <h5 class="text-secondary mb-3 border-bottom pb-1">Flete y Pago</h5>
-                <div class="row">
-                    <div class="col-md-6">
-                        <table class="table table-sm table-borderless" style="font-size: 1rem;">
-                            <tbody>
-                                <tr>
-                                    <th>Flete Total</th>
-                                    <td>
-                                        <span id="fleteTotalEdit"
-                                            class="editable-money"
-                                            data-total="<?= $package['flete_total'] ?>"
-                                            data-pagado="<?= $package['flete_pagado'] ?>"
-                                            data-toggle="<?= $package['toggle_pago_parcial'] ?>"
-                                            data-id="<?= $package['id'] ?>">
-
-                                            <strong>$<?= number_format($package['flete_total'], 2) ?></strong>
-
-                                        </span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Pago Parcial Activo</th>
-                                    <td id="badgePagoParcial">
-                                        <?= !empty($package['toggle_pago_parcial'])
-                                            ? '<span class="badge badge-info">SÍ</span>'
-                                            : '<span class="badge badge-light">NO</span>' ?>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <table class="table table-sm table-borderless" style="font-size: 1rem;">
-                            <tbody>
-                                <tr>
-                                    <th>Flete Pagado</th>
-                                    <td class="text-success">
-                                        <span class="editable-money"
-                                            data-field="flete_pagado"
-                                            data-id="<?= $package['id'] ?>">
-                                            $<?= number_format($package['flete_pagado'], 2) ?>
-                                        </span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Flete Pendiente</th>
-                                    <td class="text-danger">
-                                        <strong id="fletePendiente">
-                                            $<?= number_format($package['flete_pendiente'], 2) ?>
-                                        </strong>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="col-md-12">
-                        <table class="table table-sm table-borderless" style="font-size: 1rem;">
-                            <tbody>
-                                <tr>
-                                    <th>Reenvios realizados</th>
-                                    <td class="text-success">
-                                        <strong><?= number_format($package['reenvios']) ?></strong>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <hr class="my-4">
-
-                <h5 class="text-secondary mb-3 border-bottom pb-1">Destino y Logística</h5>
-                <table class="table table-sm table-bordered" style="font-size: 1rem;">
-                    <tbody>
-                        <tr>
-                            <th style="width: 40%">Fecha de Ingreso</th>
-                            <td><?= formatDateDMY($package['fecha_ingreso']) ?></td>
-                        </tr>
-
-                        <?php if ($package['tipo_servicio'] == 1): // Punto Fijo 
-                        ?>
-                            <tr>
-                                <th>Punto Fijo</th>
-                                <td><?= esc($package['point_name'] ?? 'N/A') ?></td>
-                            </tr>
-                            <tr>
-                                <th>Fecha Estimada de Entrega (Punto Fijo)</th>
-                                <td><?= formatDateDMY($package['fecha_entrega_puntofijo'] ?? null) ?></td>
-                            </tr>
-
-                        <?php elseif ($package['tipo_servicio'] == 2): // Destino Personalizado 
-                        ?>
-                            <tr>
-                                <th>Destino Personalizado</th>
-                                <td><?= esc($package['destino_personalizado'] ?? 'N/A') ?></td>
-                            </tr>
-                            <tr>
-                                <th>Fecha Estimada de Entrega (Personalizado)</th>
-                                <td><?= formatDateDMY($package['fecha_entrega_personalizado'] ?? null) ?></td>
-                            </tr>
-                            <tr>
-                                <th>Ubicación</th>
-                                <td class="text-muted">
-                                    <?= esc($package['ubicacion_completa'] ?? 'Ubicación no definida') ?>
-                                </td>
-                            </tr>
-
-
-                        <?php elseif ($package['tipo_servicio'] == 3): // Recolección y Entrega Final 
-                        ?>
-                            <tr>
-                                <th>Lugar de Recolección</th>
-                                <td><?= esc($package['lugar_recolecta_paquete'] ?? 'N/A') ?></td>
-                            </tr>
-                            <tr>
-                                <th>Destino Final</th>
-                                <td><?= esc($package['destino_entrega_final'] ?? 'Pendiente') ?></td>
-                            </tr>
-                            <tr>
-                                <th>Fecha de Entrega (Personalizado)</th>
-                                <td><?= esc($package['fecha_entrega_personalizado'] ?? 'Pendiente') ?></td>
-                            </tr>
-                        <?php elseif ($package['tipo_servicio'] == 4): // Casillero 
-                        ?>
-                            <tr>
-                                <th>Número de Casillero</th>
-                                <td><?= esc($package['numero_casillero'] ?? 'N/A') ?></td>
-                            </tr>
-                            <tr>
-                                <th>Destino</th>
-                                <td><?= esc($package['destino_personalizado'] ?? 'N/A') ?></td>
-                            </tr>
-                        <?php endif; ?>
-                        <?php if (!empty($package['external_location_nombre'])): ?>
-                            <tr>
-                                <th>Casillero Externo</th>
-                                <td>
-                                    <span class="badge badge-info">
-                                        <?= esc($package['external_location_nombre']) ?>
-                                    </span>
-                                </td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-                <?php if (!empty($trackingHistory)): ?>
-
-                    <hr class="my-4">
-
-                    <h5 class="text-secondary mb-3 border-bottom pb-1">
-                        Historial de Seguimiento
-                    </h5>
-
-                    <table class="table table-sm table-bordered">
-
-                        <thead>
-                            <tr>
-                                <th>Tracking</th>
-                                <th>Fecha</th>
-                                <th>Motorista</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                            <?php foreach ($trackingHistory as $t): ?>
-
-                                <tr>
-
-                                    <td>
-                                        <a href="<?= base_url('tracking/' . $t->tracking_id) ?>"
-                                            class="btn btn-sm btn-primary"
-                                            title="Ver seguimiento completo">
-                                            <i class="fa-solid fa-route"></i> #<?= $t->tracking_id ?>
-                                        </a>
-                                    </td>
-
-                                    <td><?= date('d/m/Y', strtotime($t->tracking_date)) ?></td>
-
-                                    <td><?= esc($t->motorista) ?></td>
-
-                                    <td><?= trackingBadge($t->tracking_status) ?></td>
-
-                                </tr>
-
-                            <?php endforeach; ?>
-
-                        </tbody>
-                    </table>
-
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                <?php if (!empty($package['estatus'])): ?>
+                    <?= statusBadge($package['estatus']) ?>
                 <?php endif; ?>
-                <hr class="my-4">
-
-                <h5 class="text-secondary mb-3 border-bottom pb-1">Comentarios y Tiempos</h5>
-                <table class="table table-sm table-bordered" style="font-size: 1rem;">
-                    <tbody>
-                        <tr>
-                            <th style="width: 40%">Comentarios / Nota</th>
-                            <td><?= !empty($package['comentarios']) ? esc($package['comentarios']) : 'Sin comentarios' ?>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Paquete cancelado previamente:</th>
-                            <td><?= !empty($package['nocobrar_pack_cancelado']) ? '<span class="badge badge-warning">SÍ</span>' : '<span class="badge badge-light">NO</span>' ?>
-                            </td>
-                        </tr>
-                        <?php if (!empty($package['cliente_pago_directo'])): ?>
-                            <tr>
-                                <th>Pago directo al vendedor</th>
-                                <td>
-                                    <span class="badge badge-success">Cliente pagó directamente</span>
-
-                                    <?php if (!empty($package['fecha_cliente_pago'])): ?>
-                                        <div class="small text-muted mt-1">
-                                            Registrado el <?= formatDateDMY($package['fecha_cliente_pago']) ?>
-                                        </div>
-                                    <?php endif; ?>
-
-                                    <?php if (!empty($package['motivo_no_cobro'])): ?>
-                                        <div class="small text-muted">
-                                            <?= esc($package['motivo_no_cobro']) ?>
-                                        </div>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        <?php endif; ?>
-
-                        </td>
-                        </tr>
-                        <tr>
-                            <th>Creado</th>
-                            <td><?= formatDateDMY($package['created_at']) ?></td>
-                        </tr>
-                        <tr>
-                            <th>Última Actualización</th>
-                            <td><?= formatDateDMY($package['updated_at']) ?></td>
-                        </tr>
-                    </tbody>
-                </table>
+                <?php if (!empty($package['estatus2'])): ?>
+                    <?= statusBadge($package['estatus2']) ?>
+                <?php endif; ?>
             </div>
-
+        </div>
+        <div class="pkg-hero-actions">
+            <?php if (tienePermiso('editar_paquetes')): ?>
+                <a href="<?= base_url('packages/edit/' . $package['id']) ?>">
+                    <i class="fa-solid fa-pen"></i> Editar
+                </a>
+            <?php endif; ?>
+            <a href="<?= base_url('packages/' . $package['id'] . '/label') ?>" target="_blank">
+                <i class="fa-solid fa-print"></i> Viñeta
+            </a>
+            <a href="<?= base_url('packages') ?>">
+                <i class="fa-solid fa-arrow-left"></i> Volver
+            </a>
         </div>
     </div>
 
-</div>
-</div>
+    <div class="row g-3">
+
+        <!-- ══ COLUMNA IZQUIERDA ══ -->
+        <div class="col-12 col-md-8 order-2 order-md-1">
+
+            <!-- Información general -->
+            <div class="pkg-section">
+                <div class="pkg-section-header">
+                    <i class="fa-solid fa-circle-info text-primary"></i> Información General
+                </div>
+                <div class="pkg-section-body">
+
+                    <div class="d-row">
+                        <span class="d-lbl">Cliente</span>
+                        <span class="d-val fw-semibold"><?= esc($package['cliente']) ?></span>
+                    </div>
+
+                    <div class="d-row">
+                        <span class="d-lbl">Vendedor</span>
+                        <span class="d-val">
+                            <span id="vendedorEdit"
+                                data-id="<?= $package['id'] ?>"
+                                data-vendedor="<?= $package['vendedor'] ?>"
+                                data-nombre="<?= esc($package['seller_name']) ?>"
+                                style="cursor:pointer;text-decoration:underline dotted;color:#0d6efd;">
+                                <?= esc($package['seller_name']) ?>
+                                <i class="fa-solid fa-pen-to-square fa-xs ms-1 text-muted"></i>
+                            </span>
+                        </span>
+                    </div>
+
+                    <div class="d-row">
+                        <span class="d-lbl">Tipo servicio</span>
+                        <span class="d-val"><?= serviceLabel($package['tipo_servicio']) ?></span>
+                    </div>
+
+                    <div class="d-row">
+                        <span class="d-lbl">Monto</span>
+                        <span class="d-val fw-bold">$<?= number_format($package['monto'], 2) ?></span>
+                    </div>
+
+                    <div class="d-row">
+                        <span class="d-lbl">¿Es Frágil?</span>
+                        <span class="d-val">
+                            <?php if (!empty($package['fragil'])): ?>
+                                <span class="badge badge-danger">SÍ</span>
+                            <?php else: ?>
+                                <span class="badge badge-success">NO</span>
+                            <?php endif; ?>
+                        </span>
+                    </div>
+
+                    <div class="d-row">
+                        <span class="d-lbl">Cobro en cuenta</span>
+                        <span class="d-val">
+                            <?php if (!empty($package['cliente_pago_directo'])): ?>
+                                <span class="text-muted small">Pagado directo al vendedor</span>
+                            <?php elseif (!empty($package['pago_cuenta_nombre'])): ?>
+                                <span class="badge badge-info"><?= esc($package['pago_cuenta_nombre']) ?></span>
+                            <?php else: ?>
+                                <span class="badge badge-light">Pendiente</span>
+                            <?php endif; ?>
+                        </span>
+                    </div>
+
+                    <?php if (!empty($package['fecha_remu'])): ?>
+                    <div class="d-row">
+                        <span class="d-lbl">Pago vendedor</span>
+                        <span class="d-val">
+                            <?= formatDateDMY($package['fecha_remu']) ?>
+                            &nbsp;
+                            <?php if ($package['metodo_remu'] == 'caja'): ?>
+                                <span class="badge badge-success">Caja</span>
+                            <?php elseif ($package['metodo_remu'] == 'cuenta'): ?>
+                                <span class="badge badge-primary">Cuenta</span>
+                            <?php else: ?>
+                                <?= esc($package['metodo_remu']) ?>
+                            <?php endif; ?>
+                            <span class="text-muted small d-block"><?= esc($package['remu_user_nombre'] ?? '') ?></span>
+                        </span>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ($package['estatus'] === 'finalizado' && $package['estatus2'] === 'remunerado'): ?>
+                        <?php if (tienePermiso('solicitar_reversion')): ?>
+                        <div class="mt-2">
+                            <?php if (!empty($solicitudPendiente)): ?>
+                                <span class="badge badge-warning p-2">
+                                    <i class="fa-solid fa-clock"></i> Solicitud en proceso
+                                </span>
+                            <?php else: ?>
+                                <button id="btnRevertirPago"
+                                    class="btn btn-sm btn-warning tracking-btn w-100"
+                                    data-id="<?= $package['id'] ?>">
+                                    <i class="fa-solid fa-rotate-left me-1"></i>Solicitar reversión de Pago
+                                </button>
+                            <?php endif; ?>
+                        </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
+
+                </div>
+            </div>
+
+            <!-- Flete y Pago -->
+            <div class="pkg-section">
+                <div class="pkg-section-header">
+                    <i class="fa-solid fa-dollar-sign text-success"></i> Flete y Pago
+                </div>
+                <div class="pkg-section-body">
+
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <div class="text-muted small">Flete Total</div>
+                            <div class="fw-bold fs-6">
+                                <span id="fleteTotalEdit"
+                                    class="editable-money"
+                                    style="cursor:pointer;text-decoration:underline dotted;color:#0d6efd;"
+                                    data-total="<?= $package['flete_total'] ?>"
+                                    data-pagado="<?= $package['flete_pagado'] ?>"
+                                    data-toggle="<?= $package['toggle_pago_parcial'] ?>"
+                                    data-id="<?= $package['id'] ?>">
+                                    $<?= number_format($package['flete_total'], 2) ?>
+                                    <i class="fa-solid fa-pen-to-square fa-xs text-muted"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted small">Pago Parcial</div>
+                            <div id="badgePagoParcial">
+                                <?= !empty($package['toggle_pago_parcial'])
+                                    ? '<span class="badge badge-info">SÍ</span>'
+                                    : '<span class="badge badge-light">NO</span>' ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="text-muted small">Pagado</div>
+                            <div class="text-success fw-bold">
+                                <span class="editable-money"
+                                    data-field="flete_pagado"
+                                    data-id="<?= $package['id'] ?>">
+                                    $<?= number_format($package['flete_pagado'], 2) ?>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted small">Pendiente</div>
+                            <div class="text-danger fw-bold">
+                                <strong id="fletePendiente">$<?= number_format($package['flete_pendiente'], 2) ?></strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-row mt-2">
+                        <span class="d-lbl">Reenvíos</span>
+                        <span class="d-val text-success fw-bold"><?= number_format($package['reenvios']) ?></span>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Destino y Logística -->
+            <div class="pkg-section">
+                <div class="pkg-section-header">
+                    <i class="fa-solid fa-location-dot text-danger"></i> Destino y Logística
+                </div>
+                <div class="pkg-section-body">
+
+                    <div class="d-row">
+                        <span class="d-lbl">Fecha ingreso</span>
+                        <span class="d-val"><?= formatDateDMY($package['fecha_ingreso']) ?></span>
+                    </div>
+
+                    <?php if ($package['tipo_servicio'] == 1): ?>
+                        <div class="d-row"><span class="d-lbl">Punto Fijo</span><span class="d-val"><?= esc($package['point_name'] ?? 'N/A') ?></span></div>
+                        <div class="d-row"><span class="d-lbl">Entrega estimada</span><span class="d-val"><?= formatDateDMY($package['fecha_entrega_puntofijo'] ?? null) ?></span></div>
+                    <?php elseif ($package['tipo_servicio'] == 2): ?>
+                        <div class="d-row"><span class="d-lbl">Destino</span><span class="d-val"><?= esc($package['destino_personalizado'] ?? 'N/A') ?></span></div>
+                        <div class="d-row"><span class="d-lbl">Entrega estimada</span><span class="d-val"><?= formatDateDMY($package['fecha_entrega_personalizado'] ?? null) ?></span></div>
+                        <div class="d-row"><span class="d-lbl">Ubicación</span><span class="d-val text-muted"><?= esc($package['ubicacion_completa'] ?? 'No definida') ?></span></div>
+                    <?php elseif ($package['tipo_servicio'] == 3): ?>
+                        <div class="d-row"><span class="d-lbl">Recolección</span><span class="d-val"><?= esc($package['lugar_recolecta_paquete'] ?? 'N/A') ?></span></div>
+                        <div class="d-row"><span class="d-lbl">Destino final</span><span class="d-val"><?= esc($package['destino_entrega_final'] ?? 'Pendiente') ?></span></div>
+                        <div class="d-row"><span class="d-lbl">Fecha entrega</span><span class="d-val"><?= esc($package['fecha_entrega_personalizado'] ?? 'Pendiente') ?></span></div>
+                    <?php elseif ($package['tipo_servicio'] == 4): ?>
+                        <div class="d-row"><span class="d-lbl">Casillero</span><span class="d-val"><?= esc($package['numero_casillero'] ?? 'N/A') ?></span></div>
+                        <div class="d-row"><span class="d-lbl">Destino</span><span class="d-val"><?= esc($package['destino_personalizado'] ?? 'N/A') ?></span></div>
+                    <?php endif; ?>
+
+                    <?php if (!empty($package['external_location_nombre'])): ?>
+                        <div class="d-row">
+                            <span class="d-lbl">Casillero externo</span>
+                            <span class="d-val"><span class="badge badge-info"><?= esc($package['external_location_nombre']) ?></span></span>
+                        </div>
+                    <?php endif; ?>
+
+                </div>
+            </div>
+
+            <!-- Tracking -->
+            <?php if (!empty($trackingHistory)): ?>
+            <div class="pkg-section">
+                <div class="pkg-section-header">
+                    <i class="fa-solid fa-route text-warning"></i> Historial de Seguimiento
+                </div>
+                <div class="pkg-section-body">
+
+                    <!-- Tabla desktop -->
+                    <div class="d-none d-md-block table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="table-light">
+                                <tr><th>Tracking</th><th>Fecha</th><th>Motorista</th><th>Estado</th></tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($trackingHistory as $t): ?>
+                                <tr>
+                                    <td>
+                                        <a href="<?= base_url('tracking/' . $t->tracking_id) ?>" class="btn btn-sm btn-primary">
+                                            <i class="fa-solid fa-route"></i> #<?= $t->tracking_id ?>
+                                        </a>
+                                    </td>
+                                    <td><?= date('d/m/Y', strtotime($t->tracking_date)) ?></td>
+                                    <td><?= esc($t->motorista) ?></td>
+                                    <td><?= trackingBadge($t->tracking_status) ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Tarjetas móvil -->
+                    <div class="d-md-none">
+                        <?php foreach ($trackingHistory as $t): ?>
+                        <div class="track-card">
+                            <div class="track-card-top">
+                                <a href="<?= base_url('tracking/' . $t->tracking_id) ?>" class="btn btn-sm btn-primary">
+                                    <i class="fa-solid fa-route"></i> #<?= $t->tracking_id ?>
+                                </a>
+                                <?= trackingBadge($t->tracking_status) ?>
+                            </div>
+                            <div class="text-muted small"><?= esc($t->motorista) ?> &middot; <?= date('d/m/Y', strtotime($t->tracking_date)) ?></div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <!-- Comentarios -->
+            <div class="pkg-section">
+                <div class="pkg-section-header">
+                    <i class="fa-solid fa-comment text-secondary"></i> Comentarios y Tiempos
+                </div>
+                <div class="pkg-section-body">
+
+                    <?php if (!empty($package['comentarios'])): ?>
+                        <div class="alert alert-light border mb-3" style="border-radius:10px;font-size:.9rem;">
+                            <?= esc($package['comentarios']) ?>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-muted small mb-3">Sin comentarios</p>
+                    <?php endif; ?>
+
+                    <div class="d-row">
+                        <span class="d-lbl">Cancelado previo</span>
+                        <span class="d-val">
+                            <?= !empty($package['nocobrar_pack_cancelado'])
+                                ? '<span class="badge badge-warning">SÍ</span>'
+                                : '<span class="badge badge-light">NO</span>' ?>
+                        </span>
+                    </div>
+
+                    <?php if (!empty($package['cliente_pago_directo'])): ?>
+                    <div class="d-row">
+                        <span class="d-lbl">Pago directo</span>
+                        <span class="d-val">
+                            <span class="badge badge-success">Cliente pagó directo</span>
+                            <?php if (!empty($package['fecha_cliente_pago'])): ?>
+                                <span class="text-muted small d-block"><?= formatDateDMY($package['fecha_cliente_pago']) ?></span>
+                            <?php endif; ?>
+                            <?php if (!empty($package['motivo_no_cobro'])): ?>
+                                <span class="text-muted small d-block"><?= esc($package['motivo_no_cobro']) ?></span>
+                            <?php endif; ?>
+                        </span>
+                    </div>
+                    <?php endif; ?>
+
+                    <div class="d-row">
+                        <span class="d-lbl">Creado</span>
+                        <span class="d-val"><?= formatDateDMY($package['created_at']) ?></span>
+                    </div>
+                    <div class="d-row">
+                        <span class="d-lbl">Actualizado</span>
+                        <span class="d-val"><?= formatDateDMY($package['updated_at']) ?></span>
+                    </div>
+
+                </div>
+            </div>
+
+        </div><!-- /col izquierda -->
+
+        <!-- ══ COLUMNA DERECHA: foto + QR ══ -->
+        <div class="col-12 col-md-4 order-1 order-md-2">
+
+            <div class="pkg-section">
+                <div class="pkg-section-header">
+                    <i class="fa-solid fa-image text-secondary"></i> Foto del paquete
+                </div>
+                <div class="pkg-section-body text-center">
+
+                    <img src="<?= esc($fotoURL) ?>" alt="Foto del Paquete"
+                        class="pkg-foto"
+                        data-toggle="modal" data-target="#modalFotoPaquete">
+                    <p class="text-muted small mt-2 mb-0">Toca para ver en grande</p>
+
+                    <?php if (!empty($package['qr_code'])): ?>
+                    <div class="mt-3">
+                        <div id="qrcode" class="d-inline-block p-2 bg-white border rounded shadow-sm"></div>
+                        <p class="text-muted mt-1 small mb-0">
+                            Código: <strong><?= esc($package['qr_code']) ?></strong>
+                        </p>
+                    </div>
+                    <?php endif; ?>
+
+                </div>
+            </div>
+
+        </div><!-- /col derecha -->
+
+    </div><!-- /row -->
+
+</div><!-- /container -->
 <div class="modal fade" id="modalFotoPaquete" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -1092,5 +1083,19 @@ function formatDateDMY($fecha)
 
     })
 </script>
+
+<?php if (!empty($package['qr_code'])): ?>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+    new QRCode(document.getElementById('qrcode'), {
+        text: '<?= esc($package['qr_code']) ?>',
+        width: 150,
+        height: 150,
+        colorDark: '#1d2744',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+    });
+</script>
+<?php endif; ?>
 
 <?= $this->endSection() ?>

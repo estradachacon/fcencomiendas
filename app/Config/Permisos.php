@@ -27,6 +27,7 @@ class Permisos extends BaseConfig
             'ver_paquetes',
             'ver_tracking',
             'crear_tracking',
+            'escanear_paquetes',
         ],
 
         'Remuneraciones' => [

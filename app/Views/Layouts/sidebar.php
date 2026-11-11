@@ -2,21 +2,7 @@
     <span class="close-mobile-nav"><i class="fa-solid fa-close"></i></span>
     <nav class="sb-sidenav accordion sb-sidenav-light" id="sidenavAccordion">
 
-        <div class="sidebar-user position-relative">
-
-            <!-- Fondo superior con color del sistema -->
-            <div
-                style="
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 69px;
-            background-color: <?= setting('primary_color') ?? '#1d2744' ?>;
-            z-index: -1;
-            border-radius: 6px 6px 0 0;
-        ">
-            </div>
+        <div class="sidebar-user position-relative" style="background: linear-gradient(135deg, #083344 0%, #0c5f78 60%, #0891b2 100%); padding-bottom: 12px;">
 
             <a href="<?= base_url('dashboard') ?>" class="text-center d-block pt-3">
 
@@ -25,15 +11,17 @@
                     <img class="logo shadow-sm"
                         src="<?= base_url('upload/settings/' . setting('logo')) ?>"
                         alt="logo-company"
-                        height="60">
+                        height="60"
+                        style="border-radius: 10px;">
                 <?php else: ?>
-                    <h5 class="text-white font-weight-bold">
+                    <h5 class="text-white font-weight-bold mb-0">
                         <?= esc(setting('company_name') ?? 'Empresa') ?>
                     </h5>
                 <?php endif; ?>
 
                 <!-- SUCURSAL -->
-                <div class="nav-link text-dark mt-2 p-0">
+                <div class="mt-2 pb-1" style="color: rgba(255,255,255,.75); font-size: .8rem; letter-spacing: .3px;">
+                    <i class="fas fa-map-marker-alt mr-1" style="color: #fb923c; font-size: .75rem;"></i>
                     <?= esc($session->get('branch_name') ?? 'N/A') ?>
                 </div>
 
@@ -115,7 +103,8 @@
                 <?php if (
                     tienePermiso('crear_paquetes') ||
                     tienePermiso('ver_paquetes') ||
-                    tienePermiso('ver_tracking')
+                    tienePermiso('ver_tracking') ||
+                    tienePermiso('escanear_paquetes')
                 ): ?>
 
                     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#sales" aria-expanded="false"
@@ -138,6 +127,12 @@
 
                             <?php if (tienePermiso('ver_tracking')): ?>
                                 <a class="nav-link" href="/tracking">Seguimiento de paquetes</a>
+                            <?php endif; ?>
+
+                            <?php if (tienePermiso('escanear_paquetes')): ?>
+                                <a class="nav-link" href="/packages/scanner">
+                                    <i class="fa-solid fa-qrcode mr-1"></i> Escáner QR
+                                </a>
                             <?php endif; ?>
 
                         </nav>

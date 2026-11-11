@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let listaEspeciales = [];         // paquetes tipo 2 y 3
     let listaPendientes3 = [];
     let municipioSeleccionado = "";
+    let reenvioSet = new Set();       // IDs de paquetes que requieren reenvío
 
     // ELEMENTOS DEL DOM
     const tablaTracking = document.getElementById("tracking-body");
@@ -51,17 +52,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // FLATPICKR – Fecha del tracking
-    flatpickr("#fecha_tracking", {
-        dateFormat: "Y-m-d",
-        locale: "es",
-        disableMobile: true,
-        allowInput: false,
-    });
-
     // CARGA DE PAQUETES POR RUTA
     async function loadPaquetesPorRuta(rutaId) {
-        tablaPaquetesRuta.innerHTML = `<tr><td colspan="4">Cargando...</td></tr>`;
+        tablaPaquetesRuta.innerHTML = `<p class="text-muted text-center py-3">Cargando...</p>`;
         try {
             const resp = await fetch(`/tracking-pendientes/ruta/${rutaId}`);
             const data = await resp.json();
@@ -69,31 +62,49 @@ document.addEventListener("DOMContentLoaded", () => {
             listaRuta.forEach(p => paquetesCache[p.id] = p);
             renderPaquetesRuta();
         } catch (e) {
-            tablaPaquetesRuta.innerHTML = `<tr><td colspan="4">Error al cargar</td></tr>`;
+            tablaPaquetesRuta.innerHTML = `<p class="text-danger text-center py-3">Error al cargar</p>`;
         }
     }
 
     function renderPaquetesRuta() {
         tablaPaquetesRuta.innerHTML = "";
         const fechaGlobal = fechaTracking.value;
-        let lista = listaRuta.filter(p => coincideConFecha(p, fechaGlobal));
+        const lista = listaRuta.filter(p => coincideConFecha(p, fechaGlobal));
 
         if (!lista.length) {
-            tablaPaquetesRuta.innerHTML = `<tr><td colspan="4">No hay paquetes para esta ruta y esta fecha</td></tr>`;
+            tablaPaquetesRuta.innerHTML = `<p class="text-muted text-center py-3">No hay paquetes para esta ruta y esta fecha</p>`;
             return;
         }
 
         lista.forEach(p => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-            <td><input type="checkbox" class="chkRuta" data-id="${p.id}"></td>
-            <td>${p.id}</td>
-            <td>${p.vendedor}</td>
-            <td>${p.cliente}</td>
-            <td>${p.punto_fijo_nombre}</td>
-            <td>${isNaN(parseFloat(p.monto)) ? 'Cancelado' : '$' + parseFloat(p.monto).toFixed(2)}</td>
-        `;
-            tablaPaquetesRuta.appendChild(tr);
+            const monto = isNaN(parseFloat(p.monto)) ? 'Cancelado' : '$' + parseFloat(p.monto).toFixed(2);
+            const sub   = [p.punto_fijo_nombre, p.vendedor].filter(Boolean).join(' · ');
+
+            const card = document.createElement("div");
+            card.className = "pkg-card";
+            card.innerHTML = `
+                <input type="checkbox" class="chkRuta" data-id="${p.id}">
+                <div class="pkg-card-body">
+                    <div class="pkg-card-top">
+                        <span class="pkg-card-id">#${p.id}</span>
+                        <span class="pkg-card-name">${p.cliente}</span>
+                    </div>
+                    <div class="pkg-card-sub">${sub}</div>
+                </div>
+                <span class="pkg-card-monto">${monto}</span>
+            `;
+
+            card.addEventListener("click", function (e) {
+                if (e.target.type === "checkbox") return;
+                const chk = this.querySelector(".chkRuta");
+                chk.checked = !chk.checked;
+                this.classList.toggle("selected", chk.checked);
+            });
+            card.querySelector(".chkRuta").addEventListener("change", function () {
+                card.classList.toggle("selected", this.checked);
+            });
+
+            tablaPaquetesRuta.appendChild(card);
         });
     }
 
@@ -118,73 +129,69 @@ document.addEventListener("DOMContentLoaded", () => {
         tablaEspecialesBody.innerHTML = "";
 
         const fechaGlobal = fechaTracking.value;
-        const filtro = selectFiltroTipo.value;
-        const municipioId =
-            municipioSeleccionado === VALOR_TODOS || !municipioSeleccionado
-                ? null
-                : municipioSeleccionado;
+        const filtro      = selectFiltroTipo.value;
+        const municipioId = municipioSeleccionado === VALOR_TODOS || !municipioSeleccionado
+            ? null : municipioSeleccionado;
 
-        let lista = listaEspeciales.filter(p => {
+        const lista = listaEspeciales.filter(p => {
             if (filtro && p.tipo_servicio != filtro) return false;
             if (municipioId && p.municipio_id != municipioId) return false;
             return coincideConFecha(p, fechaGlobal);
         });
 
         if (!lista.length) {
-            tablaEspecialesBody.innerHTML = `<tr><td colspan="6">Sin resultados para esta fecha</td></tr>`;
+            tablaEspecialesBody.innerHTML = `<p class="text-muted text-center py-3">Sin resultados para esta fecha</p>`;
             return;
         }
 
         lista.forEach(p => {
-            let ubicacion = [];
-            if (p.departamento_nombre) ubicacion.push(p.departamento_nombre);
-            if (p.municipio_nombre) ubicacion.push(p.municipio_nombre);
-            if (p.colonia_nombre) ubicacion.push(p.colonia_nombre);
+            const monto    = isNaN(parseFloat(p.monto)) ? 'Cancelado' : '$' + parseFloat(p.monto).toFixed(2);
+            const destino  = p.tipo_servicio == 2 ? p.destino_personalizado : p.lugar_recolecta_paquete;
+            const ubicParts = [p.municipio_nombre, p.colonia_nombre].filter(Boolean);
+            const sub      = [destino, ubicParts.join(', ')].filter(Boolean).join(' · ');
+            const checked  = paquetesSeleccionados[p.id] ? 'checked' : '';
 
-            const ubicacionTexto = ubicacion.length
-                ? `<div class="text-muted small">${ubicacion.join(" → ")}</div>`
-                : "";
+            const card = document.createElement("div");
+            card.className = "pkg-card" + (checked ? " selected" : "");
+            card.innerHTML = `
+                <input type="checkbox" class="chkEspecial" data-id="${p.id}" ${checked}>
+                <div class="pkg-card-body">
+                    <div class="pkg-card-top">
+                        <span class="pkg-card-id">#${p.id}</span>
+                        <span class="pkg-card-name">${p.cliente}</span>
+                    </div>
+                    <div class="pkg-card-sub">${sub}</div>
+                    <div class="pkg-card-sub" style="color:#374151">${p.vendedor}</div>
+                </div>
+                <span class="pkg-card-monto">${monto}</span>
+            `;
 
-            const destinoPrincipal =
-                p.tipo_servicio == 2
-                    ? p.destino_personalizado
-                    : p.lugar_recolecta_paquete;
+            card.addEventListener("click", function (e) {
+                if (e.target.type === "checkbox") return;
+                const chk = this.querySelector(".chkEspecial");
+                chk.checked = !chk.checked;
+                this.classList.toggle("selected", chk.checked);
+            });
+            card.querySelector(".chkEspecial").addEventListener("change", function () {
+                card.classList.toggle("selected", this.checked);
+            });
 
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-        <td>
-            <input type="checkbox"
-                class="chkEspecial"
-                data-id="${p.id}"
-                ${paquetesSeleccionados[p.id] ? 'checked' : ''}>
-        </td>
-        <td>${p.id}</td>
-        <td>${p.vendedor}</td>
-        <td>${p.cliente}</td>
-        <td>
-            <div>${destinoPrincipal}</div>
-            ${ubicacionTexto}
-        </td>
-        <td>${isNaN(parseFloat(p.monto)) ? 'Cancelado' : '$' + parseFloat(p.monto).toFixed(2)}</td>
-    `;
-            tablaEspecialesBody.appendChild(tr);
+            tablaEspecialesBody.appendChild(card);
         });
     }
 
     async function loadPendientes3() {
-        tablaPendientes3.innerHTML = `<tr><td colspan="4">Cargando...</td></tr>`;
+        tablaPendientes3.innerHTML = `<p class="text-muted text-center py-3">Cargando...</p>`;
         try {
             const resp = await fetch("/tracking-pendientes/todos");
             const data = await resp.json();
-
-            // Filtrar paquetes tipo 3 Y los de "recolecta_fallida"
             listaPendientes3 = data.filter(p =>
                 (p.tipo_servicio == 3 && p.estatus !== 'recolectado' && p.estatus !== 'finalizado') || p.estatus == 'recolecta_fallida'
             );
             listaPendientes3.forEach(p => paquetesCache[p.id] = p);
             renderPendientes3();
         } catch (e) {
-            tablaPendientes3.innerHTML = `<tr><td colspan="6">Error</td></tr>`;
+            tablaPendientes3.innerHTML = `<p class="text-danger text-center py-3">Error al cargar</p>`;
         }
     }
 
@@ -234,36 +241,64 @@ document.addEventListener("DOMContentLoaded", () => {
         tablaPendientes3.innerHTML = "";
 
         if (!listaPendientes3.length) {
-            tablaPendientes3.innerHTML = `<tr><td colspan="6">No hay paquetes pendientes de recolecta</td></tr>`;
+            tablaPendientes3.innerHTML = `<p class="text-muted text-center py-3">No hay paquetes pendientes de recolecta</p>`;
             return;
         }
 
         listaPendientes3.forEach(p => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td><input type="checkbox" class="chkPend3" data-id="${p.id}"></td>
-                <td>${p.id}</td>
-                <td>${p.vendedor}</td>
-                <td>${p.cliente}</td>
-                <td>${p.descripcion || p.destino_personalizado || p.punto_fijo_nombre || "Sin información"}</td>
-                <td>${isNaN(parseFloat(p.monto)) ? 'Cancelado' : '$' + parseFloat(p.monto).toFixed(2)}</td>
+            const monto   = isNaN(parseFloat(p.monto)) ? 'Cancelado' : '$' + parseFloat(p.monto).toFixed(2);
+            const destino = p.descripcion || p.destino_personalizado || p.punto_fijo_nombre || "Sin información";
+            const badge   = p.estatus === 'recolecta_fallida'
+                ? `<span style="font-size:.7rem;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:4px;padding:1px 5px;margin-left:4px;">Fallida</span>`
+                : '';
+
+            const card = document.createElement("div");
+            card.className = "pkg-card";
+            card.innerHTML = `
+                <input type="checkbox" class="chkPend3" data-id="${p.id}">
+                <div class="pkg-card-body">
+                    <div class="pkg-card-top">
+                        <span class="pkg-card-id">#${p.id}</span>
+                        <span class="pkg-card-name">${p.cliente}</span>${badge}
+                    </div>
+                    <div class="pkg-card-sub">${destino}</div>
+                    <div class="pkg-card-sub" style="color:#374151">${p.vendedor}</div>
+                </div>
+                <span class="pkg-card-monto">${monto}</span>
             `;
-            tablaPendientes3.appendChild(tr);
+
+            card.addEventListener("click", function (e) {
+                if (e.target.type === "checkbox") return;
+                const chk = this.querySelector(".chkPend3");
+                chk.checked = !chk.checked;
+                this.classList.toggle("selected", chk.checked);
+            });
+            card.querySelector(".chkPend3").addEventListener("change", function () {
+                card.classList.toggle("selected", this.checked);
+            });
+
+            tablaPendientes3.appendChild(card);
         });
     }
+
     // SELECT / DESELECT ALL – RECOLECTAS
     document.getElementById("selectAllPendientes3").addEventListener("click", () => {
-        const checks = document.querySelectorAll(".chkPend3");
+        const checks = document.querySelectorAll("#tablaPendientes3 .chkPend3");
         const allChecked = [...checks].every(c => c.checked);
-        checks.forEach(c => c.checked = !allChecked);
+        checks.forEach(c => {
+            c.checked = !allChecked;
+            c.closest(".pkg-card").classList.toggle("selected", !allChecked);
+        });
     });
 
     // SELECT / DESELECT ALL – RUTAS
     document.getElementById("selectAllRuta").addEventListener("click", () => {
         const checks = document.querySelectorAll("#tablaPaquetesRuta .chkRuta");
         const allChecked = [...checks].every(c => c.checked);
-        // Si todos están checked → desmarcarlos - Si no → marcarlos todos
-        checks.forEach(c => c.checked = !allChecked);
+        checks.forEach(c => {
+            c.checked = !allChecked;
+            c.closest(".pkg-card").classList.toggle("selected", !allChecked);
+        });
     });
 
     // Disparadores de Modales
@@ -307,7 +342,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("selectAllEspeciales").addEventListener("click", () => {
         const checks = document.querySelectorAll("#tablaEspeciales .chkEspecial");
         const allChecked = [...checks].every(c => c.checked);
-        checks.forEach(c => c.checked = !allChecked);
+        checks.forEach(c => {
+            c.checked = !allChecked;
+            c.closest(".pkg-card").classList.toggle("selected", !allChecked);
+        });
     });
 
     selectFiltroTipo.addEventListener("change", renderEspeciales);
@@ -449,6 +487,36 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
     }
 
+    function agregarPaqueteEscaneado(pkg, esReenvio = false) {
+        const id = String(pkg.id);
+        if (paquetesSeleccionados[id]) return false;
+        const normalizado = Object.assign({}, pkg, {
+            punto_fijo_nombre: pkg.point_name || pkg.punto_fijo_nombre || null,
+            vendedor: pkg.seller_name || pkg.vendedor || '—',
+            ruta_id: pkg.ruta_id || pkg.route_id || null
+        });
+        paquetesSeleccionados[id] = normalizado;
+        paquetesCache[id] = normalizado;
+        if (esReenvio) reenvioSet.add(id);
+        renderTracking();
+        actualizarTotal();
+        return true;
+    }
+
+    function rutaEsCompatible(pkg) {
+        const rutaSel = selectRuta ? selectRuta.value : '';
+        if (!rutaSel || !pkg.ruta_id) return true; // sin ruta elegida o paquete sin ruta → siempre ok
+        return String(pkg.ruta_id) === String(rutaSel);
+    }
+
+    window.rutaEsCompatible = rutaEsCompatible;
+
+    // Expone la API para el scanner inline
+    window.trackingApp = {
+        agregarPaqueteEscaneado,
+        isYaSeleccionado: id => !!paquetesSeleccionados[String(id)]
+    };
+
     function actualizarTotal() {
         let total = 0;
         Object.values(paquetesSeleccionados).forEach(pkg => {
@@ -461,46 +529,71 @@ document.addEventListener("DOMContentLoaded", () => {
     // RENDER TABLA PRINCIPAL
     function renderTracking() {
         tablaTracking.innerHTML = "";
-        Object.values(paquetesSeleccionados).forEach(pkg => {
-            let destino = "";
 
-            switch (parseInt(pkg.tipo_servicio)) {
-                case 1:
-                    destino = `Punto fijo → ${pkg.punto_fijo_nombre}`;
-                    break;
+        const pkgs = Object.values(paquetesSeleccionados);
 
-                case 2:
-                    destino = `Personalizado → ${pkg.destino_personalizado}`;
-                    break;
+        if (!pkgs.length) {
+            tablaTracking.innerHTML = `
+                <tr><td colspan="6" class="trk-empty-state">
+                    <i class="fa fa-box-open"></i>
+                    <strong>Sin paquetes agregados</strong>
+                    <p>Usa los botones de arriba para agregar paquetes al tracking.</p>
+                </td></tr>`;
+            return;
+        }
 
-                case 3:
-                    destino = `Recolección → ${pkg.lugar_recolecta_paquete}`;
-                    if (pkg.destino_personalizado) {
-                        destino += ` → Entregar en: ${pkg.destino_personalizado}`;
-                    }
-                    if (pkg.punto_fijo_nombre) {
-                        destino += ` → Punto fijo: ${pkg.punto_fijo_nombre}`;
-                    }
-                    break;
-                default:
-                    destino = "No definido";
-            }
+        pkgs.forEach(pkg => {
+            const tipo = parseInt(pkg.tipo_servicio);
 
             const tipoTexto =
-                pkg.tipo_servicio == 1 ? "Punto fijo" :
-                    pkg.tipo_servicio == 2 ? "Personalizado" :
-                        pkg.tipo_servicio == 3 ? "Recolección" :
-                            pkg.tipo_servicio == 4 ? "Casillero" :
-                                "Desconocido";
+                tipo === 1 ? "Punto fijo" :
+                tipo === 2 ? "Personalizado" :
+                tipo === 3 ? "Recolección" :
+                tipo === 4 ? "Casillero" : "Desconocido";
+
+            // Destino principal (conciso)
+            let destinoMain = "";
+            let destinoSub  = "";
+            switch (tipo) {
+                case 1:
+                    destinoMain = pkg.punto_fijo_nombre || "—";
+                    break;
+                case 2:
+                    destinoMain = pkg.destino_personalizado || "—";
+                    if (pkg.municipio_nombre) destinoSub = pkg.municipio_nombre;
+                    break;
+                case 3:
+                    destinoMain = pkg.lugar_recolecta_paquete || "—";
+                    if (pkg.destino_personalizado) destinoSub = `Entregar: ${pkg.destino_personalizado}`;
+                    else if (pkg.punto_fijo_nombre) destinoSub = `Punto fijo: ${pkg.punto_fijo_nombre}`;
+                    break;
+                default:
+                    destinoMain = "No definido";
+            }
+
+            const montoNum = parseFloat(pkg.monto);
+            const montoHTML = isNaN(montoNum)
+                ? `<span class="trk-monto cancelado">Cancelado</span>`
+                : `<span class="trk-monto">$${montoNum.toFixed(2)}</span>`;
 
             const tr = document.createElement("tr");
             tr.innerHTML = `
-                <td>${tipoTexto}</td>
-                <td>${pkg.id}</td>
-                <td>${pkg.cliente}</td>
-                <td>${construirDestinoConUbicacion(pkg)}</td>
-                <td>${isNaN(parseFloat(pkg.monto)) ? 'Cancelado' : '$' + parseFloat(pkg.monto).toFixed(2)}</td>
-                <td><button class="btn btn-danger btn-sm btnQuit" data-id="${pkg.id}">X</button></td>
+                <td><span class="trk-tipo-badge trk-tipo-${tipo}">${tipoTexto}</span></td>
+                <td data-label="Paquete">
+                    <span class="trk-tipo-badge trk-tipo-${tipo} trk-badge-mobile">${tipoTexto}</span>
+                    <span class="trk-pkg-id">#${pkg.id}</span>
+                </td>
+                <td data-label="Cliente">${pkg.cliente}</td>
+                <td data-label="Destino">
+                    <div class="trk-dest-main">${destinoMain}</div>
+                    ${destinoSub ? `<div class="trk-dest-sub">${destinoSub}</div>` : ''}
+                </td>
+                <td data-label="Monto">${montoHTML}</td>
+                <td>
+                    <button class="trk-btn-quit btnQuit" data-id="${pkg.id}" title="Quitar">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </td>
             `;
             tablaTracking.appendChild(tr);
         });
@@ -522,10 +615,41 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // ── Select2 para Rutas (no selector nativo) ──
+    let rutasConPaquetesIds = new Set();
+
+    function starTemplate(state) {
+        if (!state.id) return state.text;
+        if (rutasConPaquetesIds.has(String(state.id))) {
+            return $('<span>').append(
+                $('<span style="color:#0891b2;font-weight:700;margin-right:4px;">★</span>'),
+                document.createTextNode(state.text)
+            );
+        }
+        return state.text;
+    }
+
+    $('#ruta_select').select2({
+        placeholder:     'Seleccione una ruta',
+        allowClear:      true,
+        width:           '100%',
+        dropdownParent:  $('#modalRutas'),
+        templateResult:  starTemplate,
+        templateSelection: starTemplate
+    }).on('change', function () {
+        if (!this.value) { tablaPaquetesRuta.innerHTML = ''; return; }
+        loadPaquetesPorRuta(this.value);
+    });
+
     // CARGA AUTOMÁTICA DE LISTAS AL ABRIR MODALES
-    selectRuta.addEventListener("change", () => {
-        if (!selectRuta.value) return;
-        loadPaquetesPorRuta(selectRuta.value);
+    modalRutas.on('show.bs.modal', function () {
+        const fecha = fechaTracking.value;
+        if (!fecha) return;
+        fetch('/tracking-pendientes/rutas-con-paquetes/' + fecha)
+            .then(r => r.json())
+            .then(data => {
+                rutasConPaquetesIds = new Set(data.map(r => String(r.id)));
+            });
     });
 
     modalEspeciales.on("shown.bs.modal", () => {
@@ -660,6 +784,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     form.appendChild(i);
                 });
 
+                reenvioSet.forEach(id => {
+                    const rp = document.createElement("input");
+                    rp.type = "hidden";
+                    rp.name = "reenvio_paquetes[]";
+                    rp.value = id;
+                    form.appendChild(rp);
+                });
+
                 document.body.appendChild(form);
                 form.submit();
             }
@@ -669,7 +801,34 @@ document.addEventListener("DOMContentLoaded", () => {
         $('#motorista').select2({
             placeholder: 'Seleccione un motorista',
             allowClear: true,
-            width: '100%'
+            width: '100%',
+            dropdownAutoWidth: false
+        });
+
+        // Reposicionar dropdown dentro del viewport en mobile
+        var $motoristaDd = null;
+        $('#motorista').on('select2:open', function () {
+            var $sel = $(this);
+            setTimeout(function () {
+                $motoristaDd = $('body > .select2-container--open .select2-dropdown');
+                if (!$motoristaDd.length) { $motoristaDd = null; return; }
+                var rect    = $sel[0].getBoundingClientRect();
+                var vw      = document.documentElement.clientWidth;
+                var ddW     = $motoristaDd[0].offsetWidth;
+                var left    = Math.max(12, Math.min(rect.left, vw - ddW - 12));
+                $motoristaDd.css({
+                    position:    'fixed',
+                    top:         (rect.bottom + 1) + 'px',
+                    left:        left + 'px',
+                    'max-width': (vw - 24) + 'px',
+                    'z-index':   9999
+                });
+            }, 0);
+        }).on('select2:close', function () {
+            if ($motoristaDd) {
+                $motoristaDd.css({ position: '', top: '', left: '', 'max-width': '', 'z-index': '' });
+                $motoristaDd = null;
+            }
         });
     });
     // Cuando cambio la ruta manualmente

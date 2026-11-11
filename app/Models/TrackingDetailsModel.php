@@ -41,6 +41,8 @@ class TrackingDetailsModel extends Model
         packages.pago_cuenta,
         packages.estatus AS package_status,
         packages.flete_rendido AS flete_rendido,
+        packages.qr_code,
+        packages.cliente_pago_directo,
         settled_points.point_name AS puntofijo_nombre,
         sellers.seller AS vendedor,
         accounts.name AS cuenta_nombre

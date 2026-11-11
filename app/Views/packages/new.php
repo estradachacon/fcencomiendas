@@ -657,8 +657,29 @@
 
                         if (response.status === "success") {
                             Swal.close();
-                            // Redirige al mismo view pero con query param
-                            window.location.href = "<?= base_url('/packages/new') ?>?created=1";
+
+                            const labelUrl = "<?= base_url('packages/') ?>" + response.package_id + "/label";
+
+                            Swal.fire({
+                                icon: 'success',
+                                title: '¡Paquete creado!',
+                                text: 'Código: ' + response.qr_code,
+                                showConfirmButton: true,
+                                showDenyButton: true,
+                                showCancelButton: false,
+                                confirmButtonText: '🖨️ Imprimir viñeta',
+                                denyButtonText: '➕ Nuevo paquete',
+                                confirmButtonColor: '#1d2744',
+                                denyButtonColor: '#28a745',
+                                allowOutsideClick: false,
+                            }).then(result => {
+                                if (result.isConfirmed) {
+                                    window.open(labelUrl, '_blank');
+                                    window.location.href = "<?= base_url('/packages/new') ?>";
+                                } else if (result.isDenied) {
+                                    window.location.href = "<?= base_url('/packages/new') ?>";
+                                }
+                            });
 
                         } else {
                             Swal.fire("Error", response.message, "error");

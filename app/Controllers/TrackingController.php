@@ -94,19 +94,17 @@ class TrackingController extends BaseController
             ->orderBy('user_name', 'ASC')
             ->findAll();
 
-        // Rutas
         $rutas = $rutaModel
             ->orderBy('route_name', 'ASC')
             ->findAll();
 
-        $data['municipios'] =  $paqueteModel->getMunicipiosConPaquetesPersonalizados();
-        $data = [
-            'motoristas' => $motoristas,
-            'rutas' => $rutas,
-            'municipios' => $data['municipios']
-        ];
+        $municipios = $paqueteModel->getMunicipiosConPaquetesPersonalizados();
 
-        return view('trackings/new', $data);
+        return view('trackings/new', [
+            'motoristas'  => $motoristas,
+            'rutas'       => $rutas,
+            'municipios'  => $municipios,
+        ]);
     }
 
     public function getPendientesPorRuta($rutaId)
@@ -180,12 +178,23 @@ class TrackingController extends BaseController
         $motorista_id = $this->request->getPost('motorista_id');
         $fecha_seguimiento = $this->request->getPost('fecha_tracking');
         $paquetes = $this->request->getPost('paquetes'); // array
+        $reenvio_paquetes = $this->request->getPost('reenvio_paquetes') ?: []; // paquetes marcados para reenvío desde escáner
 
         if (empty($motorista_id) || empty($paquetes)) {
             return redirect()->back()->with('error', 'Motorista y paquetes son requeridos')->withInput();
         }
 
         $ruta_id = $this->request->getPost('ruta_id') ?: null;
+
+        // Preparar paquetes marcados para reenvío: actualizar su estatus antes del loop principal
+        if (!empty($reenvio_paquetes)) {
+            foreach ($reenvio_paquetes as $rpid) {
+                $packageModel->update($rpid, [
+                    'estatus'  => 'pendiente',
+                    'estatus2' => 'reenvio',
+                ]);
+            }
+        }
 
         $idHeader = $headerModel->insert([
             'user_id' => $motorista_id,
@@ -295,6 +304,45 @@ class TrackingController extends BaseController
         return $this->response->setJSON($paquetes);
     }
 
+    public function fechasPaquetesDisponibles()
+    {
+        $from = $this->request->getGet('from');
+        $to   = $this->request->getGet('to');
+
+        $db      = \Config\Database::connect();
+        $where   = "WHERE estatus IN ('pendiente','Pendiente','recolectado','recolecta_fallida')";
+        $params  = [];
+
+        if ($from && $to) {
+            $where  .= " AND DATE(COALESCE(NULLIF(fecha_entrega_puntofijo,'0000-00-00'),NULLIF(fecha_ingreso,'0000-00-00'),created_at)) BETWEEN ? AND ?";
+            $params  = [$from, $to];
+        }
+
+        $rows = $db->query("
+            SELECT
+                DATE(COALESCE(
+                    NULLIF(fecha_entrega_puntofijo, '0000-00-00'),
+                    NULLIF(fecha_ingreso, '0000-00-00'),
+                    created_at
+                )) AS fecha,
+                COUNT(*) AS total
+            FROM packages
+            {$where}
+            GROUP BY fecha
+            HAVING fecha IS NOT NULL
+            ORDER BY fecha ASC
+        ", $params)->getResultArray();
+
+        $data = [];
+        foreach ($rows as $r) {
+            if (!empty($r['fecha']) && $r['fecha'] !== '0000-00-00') {
+                $data[$r['fecha']] = (int) $r['total'];
+            }
+        }
+
+        return $this->response->setJSON($data);
+    }
+
     public function rutasConPaquetes($fecha)
     {
         $fecha = filter_var($fecha, FILTER_SANITIZE_SPECIAL_CHARS);
@@ -303,16 +351,19 @@ class TrackingController extends BaseController
         $builder->select('r.id, r.route_name AS text');
         $builder->distinct();
         $builder->join('packages AS p', 'r.id = p.ruta_id', 'inner');
-        $builder->where('p.fecha_entrega_puntofijo', $fecha);
+        $builder->groupStart()
+            ->where('p.fecha_entrega_puntofijo', $fecha)
+            ->orWhere('p.fecha_ingreso', $fecha)
+            ->groupEnd();
 
         $builder->groupStart()
             ->groupStart()
             ->where('p.tipo_servicio', 1)
-            ->where('p.estado', 'pendiente')
+            ->whereIn('p.estatus', ['pendiente', 'Pendiente'])
             ->groupEnd()
             ->orGroupStart()
             ->where('p.tipo_servicio', 3)
-            ->where('p.estado', 'recolectado')
+            ->whereIn('p.estatus', ['recolectado', 'recolecta_fallida'])
             ->where('p.id_puntofijo IS NOT NULL')
             ->groupEnd()
             ->groupEnd();
@@ -323,5 +374,152 @@ class TrackingController extends BaseController
         }
         $rutas = $builder->get()->getResult();
         return $this->response->setJSON($rutas);
+    }
+
+    public function labels(int $id)
+    {
+        $chk = requerirPermiso('ver_tracking');
+        if ($chk !== true) return $chk;
+
+        $headerModel  = new TrackingHeaderModel();
+        $detailsModel = new TrackingDetailsModel();
+
+        $tracking = $headerModel->getHeaderWithRelations($id);
+        if (!$tracking) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Tracking #$id no encontrado");
+        }
+
+        $detalles = $detailsModel->getDetailsWithPackages($id);
+
+        $paquetes = [];
+        foreach ($detalles as $d) {
+            $qrCode = !empty($d->qr_code)
+                ? $d->qr_code
+                : str_pad(\App\Libraries\Base62Converter::encode((int)$d->package_id), 6, '0', STR_PAD_LEFT);
+
+            $paquetes[] = [
+                'id'       => $d->package_id,
+                'cliente'  => $d->cliente  ?? '—',
+                'vendedor' => $d->vendedor ?? '—',
+                'qr_code'  => $qrCode,
+                'qr_svg'   => $this->makeQrDataUri($qrCode),
+            ];
+        }
+
+        $html = view('trackings/labels_pdf', [
+            'tracking' => $tracking,
+            'paquetes' => $paquetes,
+        ]);
+
+        if (ob_get_length()) ob_clean();
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode'          => 'utf-8',
+            'format'        => [50.8, 25.4],
+            'tempDir'       => WRITEPATH . 'temp',
+            'margin_left'   => 2,
+            'margin_right'  => 2,
+            'margin_top'    => 1.5,
+            'margin_bottom' => 1.5,
+        ]);
+        $mpdf->WriteHTML($html);
+
+        $filename = "vinetas_tracking_{$id}.pdf";
+        $pdfOutput = $mpdf->Output($filename, 'S');
+
+        return $this->response
+            ->setStatusCode(200)
+            ->setContentType('application/pdf')
+            ->setHeader('Content-Disposition', 'inline; filename="' . $filename . '"')
+            ->setBody($pdfOutput);
+    }
+
+    public function labelSingle(int $packageId)
+    {
+        $chk = requerirPermiso('ver_tracking');
+        if ($chk !== true) return $chk;
+
+        $packageModel = new PackageModel();
+        $package = $packageModel
+            ->select('packages.*, sellers.seller AS vendedor_nombre')
+            ->join('sellers', 'sellers.id = packages.vendedor', 'left')
+            ->find($packageId);
+
+        if (!$package) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Paquete #$packageId no encontrado");
+        }
+
+        $qrCode = !empty($package['qr_code'])
+            ? $package['qr_code']
+            : str_pad(\App\Libraries\Base62Converter::encode($packageId), 6, '0', STR_PAD_LEFT);
+
+        $paquetes = [[
+            'id'       => $packageId,
+            'cliente'  => $package['cliente'] ?? '—',
+            'vendedor' => $package['vendedor_nombre'] ?? '—',
+            'qr_code'  => $qrCode,
+            'qr_svg'   => $this->makeQrDataUri($qrCode),
+        ]];
+
+        $html = view('trackings/labels_pdf', [
+            'tracking' => (object)['id' => $packageId],
+            'paquetes' => $paquetes,
+        ]);
+
+        if (ob_get_length()) ob_clean();
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode'          => 'utf-8',
+            'format'        => [50.8, 25.4],
+            'tempDir'       => WRITEPATH . 'temp',
+            'margin_left'   => 2,
+            'margin_right'  => 2,
+            'margin_top'    => 1.5,
+            'margin_bottom' => 1.5,
+        ]);
+        $mpdf->WriteHTML($html);
+
+        $filename = "vineta_paquete_{$packageId}.pdf";
+        $pdfOutput = $mpdf->Output($filename, 'S');
+
+        return $this->response
+            ->setStatusCode(200)
+            ->setContentType('application/pdf')
+            ->setHeader('Content-Disposition', 'inline; filename="' . $filename . '"')
+            ->setBody($pdfOutput);
+    }
+
+    private function makeQrDataUri(string $code): string
+    {
+        try {
+            $qr   = new \TCPDF2DBarcode($code, 'QRCODE,H');
+            $data = $qr->getBarcodeArray();
+            if (empty($data['bcode'])) return '';
+
+            $rows = $data['num_rows'];
+            $cols = $data['num_cols'];
+            $cell = round(80 / max($rows, $cols), 4);
+            $w    = round($cols * $cell, 2);
+            $h    = round($rows * $cell, 2);
+
+            $rects = '';
+            foreach ($data['bcode'] as $r => $row) {
+                foreach ($row as $c => $v) {
+                    if ($v) {
+                        $rects .= '<rect x="' . round($c * $cell, 2) . '" y="' . round($r * $cell, 2)
+                            . '" width="' . $cell . '" height="' . $cell . '"/>';
+                    }
+                }
+            }
+
+            $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' . $w . '" height="' . $h . '"'
+                 . ' viewBox="0 0 ' . $w . ' ' . $h . '">'
+                 . '<rect width="100%" height="100%" fill="white"/>'
+                 . '<g fill="black">' . $rects . '</g></svg>';
+
+            return 'data:image/svg+xml;base64,' . base64_encode($svg);
+        } catch (\Throwable $e) {
+            return '';
+        }
     }
 }

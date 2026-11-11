@@ -378,10 +378,13 @@ class TrackingRendicionController extends BaseController
         // 3. Inicializar mPDF con la configuración más segura
         // La ruta temporal DEBE existir y DEBE ser escribible por el servidor web.
         $mpdf = new Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4',
-            // Usamos WRITEPATH, que es la forma correcta en CodeIgniter
-            'tempDir' => WRITEPATH . 'temp'
+            'mode'          => 'utf-8',
+            'format'        => 'A4',
+            'tempDir'       => WRITEPATH . 'temp',
+            'margin_left'   => 10,
+            'margin_right'  => 10,
+            'margin_top'    => 10,
+            'margin_bottom' => 10,
         ]);
 
         // 4. Escribir el HTML

@@ -46,7 +46,8 @@ class PackageModel extends Model
         'metodo_remu',
         'remunerado_con_cuenta',
         'remu_user_id',
-        'fecha_remu'
+        'fecha_remu',
+        'qr_code'
     ];
     protected $updatedField = 'updated_at';
     protected $createdField = 'created_at';

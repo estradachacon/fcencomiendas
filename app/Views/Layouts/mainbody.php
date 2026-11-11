@@ -258,133 +258,318 @@
             /* evita barra lateral */
             padding: 0;
         }
+
+        /* ── Evitar scroll horizontal global ── */
+        html, body { overflow-x: hidden; max-width: 100vw; }
+        #layoutSidenav { max-width: 100%; }
+
+        /* ══ NAVBAR ══ */
+        .navbar {
+            border-bottom: 1px solid rgba(255,255,255,.1);
+            box-shadow: 0 2px 14px rgba(8,51,68,.28);
+            padding: 0 16px;
+            height: 58px;
+        }
+
+        .navbar .navbar-brand {
+            font-weight: 800; font-size: 1.05rem;
+            letter-spacing: .2px; color: #fff !important;
+            padding: 0; margin-right: 10px;
+        }
+
+        /* Hamburger */
+        #sidebarToggle {
+            padding: 7px 9px; border-radius: 9px;
+            background: rgba(255,255,255,.1);
+            border: 1px solid rgba(255,255,255,.15) !important;
+            transition: background .2s;
+            line-height: 1;
+        }
+        #sidebarToggle:hover { background: rgba(255,255,255,.22); }
+        .lines { display: flex; flex-direction: column; gap: 4px; padding: 1px 0; }
+        .lines span {
+            display: block; width: 20px; height: 2px;
+            background: #fff; border-radius: 2px;
+            transition: all .25s;
+        }
+
+        /* Grupo derecho del navbar */
+        .nav-right-group { gap: 2px; align-items: center; }
+
+        /* Username chip (ahora es el dropdown toggle) */
+        .nav-user-chip {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,.1);
+            border: 1px solid rgba(255,255,255,.18);
+            border-radius: 24px; padding: 4px 12px 4px 4px;
+            color: #fff; font-size: .82rem; font-weight: 600;
+            white-space: nowrap; max-width: 220px;
+            cursor: pointer; transition: background .2s, border-color .2s;
+            text-decoration: none !important;
+        }
+        .nav-user-chip:hover, .nav-user-chip:focus,
+        .nav-user-chip[aria-expanded="true"] {
+            background: rgba(255,255,255,.2);
+            border-color: rgba(255,255,255,.35);
+            color: #fff; outline: none;
+        }
+        .nav-user-chip::after { display: none; } /* quitar caret Bootstrap */
+        .nav-chip-avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            object-fit: cover;
+            border: 1.5px solid rgba(255,255,255,.3);
+            flex-shrink: 0;
+            transition: border-color .2s;
+        }
+        .nav-user-chip:hover .nav-chip-avatar { border-color: #fb923c; }
+        .nav-chip-name { overflow: hidden; text-overflow: ellipsis; }
+        .nav-chip-caret {
+            font-size: .65rem; color: rgba(255,255,255,.6);
+            flex-shrink: 0; margin-left: 2px;
+            transition: transform .2s;
+        }
+        .nav-user-chip[aria-expanded="true"] .nav-chip-caret { transform: rotate(180deg); }
+
+        /* Icono campana */
+        .nav-icon-btn { display: flex; align-items: center; }
+        .nav-icon-link {
+            display: flex; align-items: center; justify-content: center;
+            width: 38px; height: 38px; border-radius: 10px;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.12);
+            color: rgba(255,255,255,.85); font-size: 1rem;
+            transition: background .2s;
+            text-decoration: none !important;
+        }
+        .nav-icon-link:hover { background: rgba(255,255,255,.18); color: #fff; }
+        .nav-badge {
+            position: absolute; top: -4px; right: -4px;
+            background: #f97316; color: #fff;
+            border-radius: 10px; font-size: 10px;
+            padding: 1px 5px; font-weight: 700;
+            border: 2px solid #0891b2;
+            line-height: 1.4;
+        }
+        .bell-alert { color: #fb923c !important; }
+        .bell-glow { text-shadow: 0 0 6px rgba(251,146,60,.8), 0 0 12px rgba(251,146,60,.5); }
+        .navbar .badge-danger {
+            background: #f97316 !important; border-radius: 10px !important;
+            font-size: 10px !important; padding: 2px 5px !important;
+        }
+
+        /* Separador vertical entre campana y chip */
+        .nav-sep {
+            width: 1px; height: 24px;
+            background: rgba(255,255,255,.18);
+            margin: 0 8px;
+        }
+
+        /* Notification dropdown — fixed al viewport para no desbordar */
+        .notif-dropdown {
+            border: none !important;
+            box-shadow: 0 10px 36px rgba(8,51,68,.18) !important;
+            border-radius: 12px !important; overflow: hidden;
+            position: fixed !important;
+            top: 58px !important;
+            right: 12px !important;
+            left: auto !important;
+            width: min(420px, calc(100vw - 24px)) !important;
+            max-width: calc(100vw - 24px) !important;
+            max-height: 70vh; overflow-y: auto; overflow-x: hidden;
+        }
+        .notif-dropdown .dropdown-header {
+            background: linear-gradient(135deg, #083344, #0891b2);
+            color: #fff !important; border-radius: 0 !important;
+            padding: 12px 16px !important; font-size: 13px !important;
+        }
+        .notif-dropdown .dropdown-header .badge-danger { background: #f97316 !important; }
+        .notif-dropdown .dropdown-item.text-primary { color: #0891b2 !important; font-weight: 600; }
+        .notif-card:hover { background: #f0f9ff; }
+
+        /* ══ SIDEBAR ══ */
+        .sb-sidenav { border-right: 1px solid #e9ecef; }
+
+        /* Header del sidebar (zona logo/sucursal) */
+        .sidebar-user { background: linear-gradient(135deg, #083344 0%, #0c5f78 60%, #0891b2 100%); }
+        .sidebar-user > div[style*="background-color"] { display: none !important; }
+        .sidebar-user .nav-link.text-dark {
+            color: rgba(255,255,255,.75) !important;
+            font-size: .8rem; letter-spacing: .3px;
+        }
+        .sidebar-user .logo { border-radius: 10px; }
+
+        /* Encabezados de sección */
+        .sb-sidenav-menu-heading {
+            font-size: .68rem; font-weight: 800; letter-spacing: 1px;
+            color: #9ca3af; padding: 18px 20px 6px; text-transform: uppercase;
+        }
+
+        /* Links principales */
+        .sb-sidenav-light .nav-link {
+            color: #374151; font-size: .88rem; padding: 9px 20px;
+            border-radius: 8px; margin: 1px 8px; transition: all .18s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .sb-sidenav-light .nav-link:hover {
+            background: #e0f9f9; color: #083344;
+        }
+        .sb-sidenav-light .nav-link.active {
+            background: linear-gradient(90deg, #e0f9f9, #f0fdfe) !important;
+            color: #0891b2 !important; font-weight: 700;
+            border-left: 3px solid #0891b2;
+            padding-left: 17px !important;
+        }
+        .sb-sidenav-light .nav-link .sb-nav-link-icon {
+            color: #0891b2; width: 18px; text-align: center;
+            font-size: .9rem; flex-shrink: 0;
+        }
+        .sb-sidenav-light .nav-link.active .sb-nav-link-icon { color: #0891b2; }
+        .sb-sidenav-light .nav-link .sb-sidenav-collapse-arrow { margin-left: auto; color: #9ca3af; font-size: .75rem; }
+
+        /* Sub-links (menú anidado) */
+        .sb-sidenav-menu-nested .nav-link {
+            padding-left: 36px !important; font-size: .84rem; color: #6b7280;
+        }
+        .sb-sidenav-menu-nested .nav-link:hover { color: #083344; }
+        .sb-sidenav-menu-nested .nav-link.active { color: #0891b2 !important; border-left: 3px solid #0891b2; padding-left: 33px !important; }
+
+        /* Scrollbar sidebar */
+        .sb-sidenav-menu { overflow-y: auto; }
+        .sb-sidenav-menu::-webkit-scrollbar { width: 4px; }
+        .sb-sidenav-menu::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+
+        /* ══ MOBILE ══ */
+        @media (max-width: 600px) {
+            .navbar { height: 52px; padding: 0 10px; }
+            .notif-dropdown, .navbar .dropdown-menu {
+                top: 52px !important; right: 8px !important;
+            }
+            .nav-chip-name { max-width: 90px; }
+        }
+
+        /* User dropdown */
+        .navbar .dropdown-menu {
+            border: none !important;
+            box-shadow: 0 10px 36px rgba(8,51,68,.18) !important;
+            border-radius: 12px !important; min-width: 180px;
+            position: fixed !important;
+            top: 58px !important;
+            right: 12px !important;
+            left: auto !important;
+        }
+        .navbar .dropdown-item {
+            font-size: .88rem; padding: 9px 16px;
+            transition: background .15s, color .15s;
+        }
+        .navbar .dropdown-item:hover { background: #e0f9f9; color: #083344; }
+        .navbar .dropdown-item i { width: 18px; color: #0891b2; }
+        .navbar .dropdown-item:last-child i { color: #f97316; }
+        .navbar .dropdown-divider { border-color: #f0f4f8; margin: 4px 0; }
     </style>
 </head>
 
 <body class="sb-nav-fixed">
     <!--Header Nav-->
     <nav class="navbar navbar-expand navbar-dark"
-        style="background-color: <?= setting('primary_color') ?? '#1d2744' ?>;">
+        style="background: linear-gradient(135deg, #083344 0%, #0c5f78 60%, #0891b2 100%)!important;">
         <div class="container-fluid d-flex justify-content-between">
-            <div class="d-flex align-items-center">
-                <a class="navbar-brand mb-0 h5 mr-3" href="/dashboard">
-                    <?= esc(setting('company_name') ?? 'Sistema') ?>
-                </a>
-                <button class="btn btn-link btn-sm text-white" id="sidebarToggle">
-                    <div class="lines">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                </button>
-            </div>
-            <div class="d-flex align-items-center">
+            <button class="btn btn-link btn-sm text-white" id="sidebarToggle">
+                <div class="lines">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </button>
+            <div class="d-flex align-items-center nav-right-group">
+
                 <?php if (tienePermiso('ver_notificaciones')): ?>
-    <li class="nav-item dropdown mr-3" style="list-style:none;">
+                <div class="dropdown nav-icon-btn" id="notifWrap">
+                    <a class="nav-icon-link position-relative"
+                        href="#"
+                        id="notifDropdown"
+                        data-toggle="dropdown"
+                        aria-haspopup="true"
+                        aria-expanded="false">
+                        <i id="notifBell" class="fa-solid fa-bell <?= !empty($notif_contador) && $notif_contador > 0 ? 'bell-alert bell-glow' : '' ?>"></i>
+                        <span id="notifCount"
+                            class="nav-badge <?= !empty($notif_contador) && $notif_contador > 0 ? '' : 'd-none' ?>">
+                            <?= $notif_contador ?? 0 ?>
+                        </span>
+                    </a>
 
-        <a class="nav-link text-white position-relative"
-            href="#"
-            id="notifDropdown"
-            data-toggle="dropdown"
-            aria-haspopup="true"
-            aria-expanded="false">
+                    <div class="dropdown-menu dropdown-menu-right notif-dropdown" aria-labelledby="notifDropdown">
+                        <div class="dropdown-header d-flex justify-content-between align-items-center">
+                            <span><i class="fa-solid fa-bell" style="color:#a7f3f8;"></i> Notificaciones</span>
+                            <?php if (!empty($notif_contador) && $notif_contador > 0): ?>
+                                <span class="badge badge-danger"><?= $notif_contador ?></span>
+                            <?php endif; ?>
+                        </div>
 
-            <i id="notifBell" class="fa-solid fa-bell fa-lg <?= !empty($notif_contador) && $notif_contador > 0 ? 'bell-alert bell-glow' : '' ?>"></i>
+                        <div id="notifList">
+                            <?php if (!empty($notif_lista)): ?>
+                                <?php foreach ($notif_lista as $n): ?>
+                                    <a href="<?= esc($n->link ?? '#') ?>"
+                                        class="notif-card text-decoration-none"
+                                        data-id="<?= $n->id ?>"
+                                        style="display:flex;">
+                                        <div class="notif-icon">
+                                            <?php if ($n->tipo === 'reversion'): ?>
+                                                <i class="fa-solid fa-rotate-left text-warning"></i>
+                                            <?php elseif ($n->tipo === 'success'): ?>
+                                                <i class="fa-solid fa-circle-check text-success"></i>
+                                            <?php elseif ($n->tipo === 'warning'): ?>
+                                                <i class="fa-solid fa-triangle-exclamation text-warning"></i>
+                                            <?php else: ?>
+                                                <i class="fa-solid fa-circle-info text-primary"></i>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="notif-content">
+                                            <div class="notif-title"><?= esc($n->titulo) ?></div>
+                                            <div class="notif-msg"><?= esc($n->mensaje) ?></div>
+                                        </div>
+                                    </a>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <div class="dropdown-item text-muted text-center py-3">Sin notificaciones</div>
+                            <?php endif; ?>
+                        </div>
 
-            <span id="notifCount"
-                class="badge badge-danger position-absolute"
-                style="top:-5px; right:-10px; font-size:11px; <?= !empty($notif_contador) && $notif_contador > 0 ? '' : 'display:none;' ?>">
-                <?= $notif_contador ?? 0 ?>
-            </span>
-
-        </a>
-
-        <div class="dropdown-menu dropdown-menu-right shadow notif-dropdown"
-            aria-labelledby="notifDropdown">
-
-            <div class="dropdown-header d-flex justify-content-between">
-                <span><i class="fa-solid fa-bell text-primary"></i> Notificaciones</span>
-                <?php if (!empty($notif_contador) && $notif_contador > 0): ?>
-                    <span class="badge badge-danger"><?= $notif_contador ?></span>
-                <?php endif; ?>
-            </div>
-
-            <div id="notifList">
-                <?php if (!empty($notif_lista)): ?>
-                    <?php foreach ($notif_lista as $n): ?>
-                        <a href="<?= esc($n->link ?? '#') ?>"
-                            class="notif-card text-decoration-none"
-                            data-id="<?= $n->id ?>"
-                            style="display:flex;">
-
-                            <div class="notif-icon">
-                                <?php if ($n->tipo === 'reversion'): ?>
-                                    <i class="fa-solid fa-rotate-left text-warning"></i>
-                                <?php elseif ($n->tipo === 'success'): ?>
-                                    <i class="fa-solid fa-circle-check text-success"></i>
-                                <?php elseif ($n->tipo === 'warning'): ?>
-                                    <i class="fa-solid fa-triangle-exclamation text-warning"></i>
-                                <?php else: ?>
-                                    <i class="fa-solid fa-circle-info text-primary"></i>
-                                <?php endif; ?>
-                            </div>
-
-                            <div class="notif-content">
-                                <div class="notif-title"><?= esc($n->titulo) ?></div>
-                                <div class="notif-msg"><?= esc($n->mensaje) ?></div>
-                            </div>
-
-                        </a>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <div class="dropdown-item text-muted text-center py-3">
-                        Sin notificaciones
+                        <div class="dropdown-divider"></div>
+                        <a href="<?= base_url('notifications') ?>" class="dropdown-item text-center text-primary">Ver todas</a>
                     </div>
+                </div>
+
+                <div class="nav-sep"></div>
                 <?php endif; ?>
-            </div>
 
-            <div class="dropdown-divider"></div>
-
-            <a href="<?= base_url('notifications') ?>"
-                class="dropdown-item text-center text-primary">
-                Ver todas
-            </a>
-
-        </div>
-
-    </li>
-<?php endif; ?>
-                <span class="badge badge-primary mr-3 p-3 badge-text-lg">
-                    <?= esc($session->get('user_name') ?? 'N/A') ?>
-                </span>
+                <?php
+                $foto = session('foto');
+                $fotoPath = ($foto && file_exists(FCPATH . 'upload/perfiles/' . $foto))
+                    ? base_url('upload/perfiles/' . $foto)
+                    : base_url('upload/profile/user.jpg');
+                ?>
                 <div class="dropdown">
-                    <?php
-                    $foto = session('foto');
-                    if ($foto && file_exists(FCPATH . 'upload/perfiles/' . $foto)) {
-                        $fotoPath = base_url('upload/perfiles/' . $foto);
-                    } else {
-                        $fotoPath = base_url('upload/profile/user.jpg'); // imagen por defecto
-                    }
-                    ?>
-                    <a class="nav-link dropdown-toggle d-flex align-items-center text-white"
+                    <a class="nav-user-chip dropdown-toggle"
                         href="#"
                         id="userDropdown"
                         data-toggle="dropdown"
                         aria-haspopup="true"
                         aria-expanded="false">
-                        <img src="<?= esc($fotoPath) ?>"
-                            alt="user-image"
-                            height="40"
-                            class="rounded-circle shadow-sm">
+                        <img src="<?= esc($fotoPath) ?>" alt="avatar" class="nav-chip-avatar">
+                        <span class="nav-chip-name"><?= esc($session->get('user_name') ?? 'N/A') ?></span>
+                        <i class="fas fa-chevron-down nav-chip-caret"></i>
                     </a>
                     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
                         <a class="dropdown-item" href="<?= base_url('perfil') ?>">
                             <i class="fa-regular fa-user"></i> Mi perfil
                         </a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="/logout"><i class="fa-solid fa-power-off"></i> Cerrar sesión</a>
+                        <a class="dropdown-item" href="/logout">
+                            <i class="fa-solid fa-power-off"></i> Cerrar sesión
+                        </a>
                     </div>
                 </div>
+
             </div>
         </div>
     </nav>

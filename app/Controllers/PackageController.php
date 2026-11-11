@@ -231,6 +231,157 @@ class PackageController extends BaseController
         ]);
     }
 
+    public function printLabel(int $id)
+    {
+        $package = $this->packageModel
+            ->select('packages.id, packages.cliente, packages.qr_code, packages.created_at, sellers.seller as seller_name')
+            ->join('sellers', 'sellers.id = packages.vendedor', 'left')
+            ->where('packages.id', $id)
+            ->first();
+
+        if (!$package) {
+            return redirect()->to('/packages/' . $id)->with('error', 'Paquete no encontrado.');
+        }
+
+        $qr = !empty($package['qr_code'])
+            ? $package['qr_code']
+            : str_pad(\App\Libraries\Base62Converter::encode($id), 6, '0', STR_PAD_LEFT);
+        $vendor = mb_strimwidth($package['seller_name'] ?? '—', 0, 28, '…');
+        $client = mb_strimwidth($package['cliente']     ?? '—', 0, 24, '…');
+
+        $pdf = new \TCPDF('P', 'mm', [50.8, 25.4], true, 'UTF-8', false);
+        $pdf->SetCreator('FC Encomiendas');
+        $pdf->SetTitle('Viñeta #' . $id);
+        $pdf->SetPrintHeader(false);
+        $pdf->SetPrintFooter(false);
+        $pdf->SetMargins(0, 0, 0, true);
+        $pdf->SetAutoPageBreak(false);
+        $pdf->AddPage();
+
+        // Brand "FC"
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->SetTextColor(29, 39, 68);
+        $pdf->SetXY(1.5, 1.5);
+        $pdf->Cell(27, 4, 'FC', 0, 2, 'L');
+
+        // "ENCOMIENDAS"
+        $pdf->SetFont('helvetica', 'B', 2.8);
+        $pdf->SetTextColor(58, 82, 152);
+        $pdf->SetXY(1.5, 5.3);
+        $pdf->Cell(27, 2, 'ENCOMIENDAS', 0, 2, 'L');
+
+        $pdf->SetDrawColor(210, 210, 210);
+        $pdf->SetLineWidth(0.1);
+        $pdf->Line(1.5, 8, 28, 8);
+
+        $pdf->SetFont('helvetica', '', 2.5);
+        $pdf->SetTextColor(190, 190, 190);
+        $pdf->SetXY(1.5, 9);
+        $pdf->Cell(27, 2, 'VENDEDOR', 0, 0, 'L');
+
+        $pdf->SetFont('helvetica', 'B', 5.5);
+        $pdf->SetTextColor(70, 70, 70);
+        $pdf->SetXY(1.5, 11.2);
+        $pdf->Cell(27, 3.5, $vendor, 0, 2, 'L');
+
+        $pdf->SetDrawColor(210, 210, 210);
+        $pdf->Line(1.5, 15.5, 28, 15.5);
+
+        $pdf->SetFont('helvetica', '', 2.5);
+        $pdf->SetTextColor(190, 190, 190);
+        $pdf->SetXY(1.5, 16.5);
+        $pdf->Cell(27, 2, 'CLIENTE', 0, 0, 'L');
+
+        $pdf->SetFont('helvetica', 'B', 7.5);
+        $pdf->SetTextColor(29, 39, 68);
+        $pdf->SetXY(1.5, 18.8);
+        $pdf->Cell(27, 5, $client, 0, 0, 'L');
+
+        $pdf->SetDrawColor(220, 220, 220);
+        $pdf->SetLineWidth(0.15);
+        $pdf->Line(28.5, 0.5, 28.5, 24.9);
+
+        $style = [
+            'border'   => false,
+            'vpadding' => 0,
+            'hpadding' => 0,
+            'fgcolor'  => [0, 0, 0],
+            'bgcolor'  => false,
+        ];
+        $pdf->write2DBarcode($qr, 'QRCODE,H', 29.5, 1.5, 20, 20, $style, 'N');
+
+        $pdf->SetFont('courier', '', 3.5);
+        $pdf->SetTextColor(120, 120, 120);
+        $pdf->SetXY(28.5, 22);
+        $pdf->Cell(22, 2.5, $qr, 0, 0, 'C');
+
+        $filename = "vineta_{$id}.pdf";
+        if (ob_get_length()) ob_clean();
+        $pdfOutput = $pdf->Output($filename, 'S');
+
+        return $this->response
+            ->setStatusCode(200)
+            ->setContentType('application/pdf')
+            ->setHeader('Content-Disposition', 'inline; filename="' . $filename . '"')
+            ->setBody($pdfOutput);
+    }
+
+    public function scanner()
+    {
+        $chk = requerirPermiso('escanear_paquetes');
+        if ($chk !== true) return $chk;
+
+        return view('packages/scanner');
+    }
+
+    public function buscarPorQr()
+    {
+        if (!tienePermiso('escanear_paquetes')) {
+            return $this->response->setStatusCode(403)->setJSON(['found' => false, 'message' => 'Sin permiso.']);
+        }
+
+        $qr = trim($this->request->getGet('qr') ?? '');
+
+        if (empty($qr)) {
+            return $this->response->setJSON(['found' => false, 'message' => 'Código vacío.']);
+        }
+
+        $package = $this->packageModel
+            ->select(
+                'packages.*,
+                users.user_name as creador_nombre,
+                settled_points.point_name,
+                sellers.seller as seller_name,
+                accounts.name as pago_cuenta_nombre,
+                colonias.nombre AS colonia_nombre,
+                municipios.nombre AS municipio_nombre,
+                departamentos.nombre AS departamento_nombre,
+                external_locations.nombre AS external_location_nombre'
+            )
+            ->join('users', 'users.id = packages.user_id', 'left')
+            ->join('settled_points', 'settled_points.id = packages.id_puntofijo', 'left')
+            ->join('sellers', 'sellers.id = packages.vendedor', 'left')
+            ->join('accounts', 'accounts.id = packages.pago_cuenta', 'left')
+            ->join('colonias', 'colonias.id = packages.colonia_id', 'left')
+            ->join('municipios', 'municipios.id = colonias.municipio_id', 'left')
+            ->join('departamentos', 'departamentos.id = municipios.departamento_id', 'left')
+            ->join('external_locations', 'external_locations.id = packages.external_location_id', 'left')
+            ->where('packages.qr_code', $qr)
+            ->first();
+
+        if (!$package) {
+            return $this->response->setJSON(['found' => false, 'message' => 'Paquete no encontrado.']);
+        }
+
+        $package = (array) $package;
+
+        $package['foto_url'] = (!empty($package['foto']) && $package['foto'] !== 'null')
+            ? base_url('upload/paquetes/' . $package['foto'])
+            : null;
+
+        return $this->response->setJSON(['found' => true, 'package' => $package]);
+    }
+
     public function new()
     {
         $chk = requerirPermiso('crear_paquetes');
@@ -316,6 +467,10 @@ class PackageController extends BaseController
         $this->packageModel->save($dataToSave);
         $newPackageId = $this->packageModel->insertID();
 
+        // Generar código QR único basado en el ID
+        $qrCode = str_pad(\App\Libraries\Base62Converter::encode($newPackageId), 6, '0', STR_PAD_LEFT);
+        $this->packageModel->update($newPackageId, ['qr_code' => $qrCode]);
+
         // REGISTRO DE TRANSACCIÓN
         $pagoParcial = $this->request->getPost('pago_parcial'); // toggle
         $fleteTotal = floatval($this->request->getPost('flete_total'));
@@ -374,8 +529,10 @@ class PackageController extends BaseController
         );
 
         return $this->response->setJSON([
-            'status' => 'success',
-            'message' => 'Paquete creado correctamente.'
+            'status'     => 'success',
+            'message'    => 'Paquete creado correctamente.',
+            'package_id' => $newPackageId,
+            'qr_code'    => $qrCode,
         ]);
     }
 
@@ -1044,6 +1201,10 @@ class PackageController extends BaseController
         ];
 
         $this->packageModel->save($dataToSave);
+        $newPackageId = $this->packageModel->insertID();
+
+        $qrCode = str_pad(\App\Libraries\Base62Converter::encode($newPackageId), 6, '0', STR_PAD_LEFT);
+        $this->packageModel->update($newPackageId, ['qr_code' => $qrCode]);
 
         return $this->response->setJSON([
             'status' => 'success',

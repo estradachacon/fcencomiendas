@@ -167,9 +167,13 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {    // Grupo del Da
     $routes->get('packages-getDestinoInfo/(:num)', 'PackageController::getDestinoInfo/$1');
     $routes->get('packages/return', 'PackageController::showReturnPackages');
     $routes->post('packages/no-retirado/(:num)', 'PackageController::marcarNoRetirado/$1');
+    $routes->get('packages/scanner', 'PackageController::scanner');
+    $routes->get('packages/scan-buscar', 'PackageController::buscarPorQr');
+    $routes->get('packages/(:num)/label', 'PackageController::printLabel/$1');
     $routes->presenter('packages', ['controller' => 'PackageController', 'only' => ['index', 'new', 'create', 'edit', 'update', 'delete', 'show']]);
 
     // Módulo de mantenimiento de tracking
+    $routes->get('tracking/fechas-paquetes', 'TrackingController::fechasPaquetesDisponibles');
     $routes->presenter('tracking', ['controller' => 'TrackingController', 'only' => ['index', 'new', 'show', 'create', 'edit', 'update']]);
     $routes->get('tracking-pendientes/ruta/(:num)', 'TrackingController::getPendientesPorRuta/$1');
     $routes->get('tracking-pendientes/todos', 'TrackingController::getTodosPendientes');
@@ -178,6 +182,8 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {    // Grupo del Da
     $routes->get('tracking-rendicion/(:num)', 'TrackingRendicionController::index/$1');
     $routes->post('tracking-rendicion/save', 'TrackingRendicionController::save');
     $routes->get('tracking-pdf/(:num)', 'TrackingRendicionController::pdf/$1');
+    $routes->get('tracking-labels/(:num)', 'TrackingController::labels/$1');
+    $routes->get('tracking-label/(:num)',  'TrackingController::labelSingle/$1');
 
     // Módulo de mantenimiento de cuentas
     $routes->presenter('accounts', ['controller' => 'AccountController', 'only' => ['index', 'new', 'create', 'edit', 'update']]);
