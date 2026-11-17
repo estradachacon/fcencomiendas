@@ -313,7 +313,7 @@
 }
 
 </style>
-<script src="<?= base_url('backend/assets/js/scripts_newtracking.js') ?>?v=<?= filemtime(FCPATH . 'backend/assets/js/scripts_newtracking.js') ?>"></script>
+<script src="<?= base_url('backend/assets/js/scripts_newtracking.js') ?>?v=20261116"></script>
 <div class="row">
     <div class="col-md-12">
 
@@ -777,6 +777,15 @@
             loadMonth(e.date.getFullYear(), e.date.getMonth() + 1);
         });
 })();
+
+// Guard: si scripts_newtracking.js cacheado inicializó Flatpickr, lo destruimos
+// en DOMContentLoaded (que corre después del DOMContentLoaded de scripts_newtracking.js)
+document.addEventListener('DOMContentLoaded', function () {
+    var el = document.getElementById('fecha_tracking');
+    if (el && el._flatpickr) {
+        el._flatpickr.destroy();
+    }
+});
 </script>
 
 <?= $this->endSection() ?>
