@@ -110,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // CARGA PAQUETES ESPECIALES (tipo 2 y 3)
     async function loadEspeciales() {
-        tablaEspecialesBody.innerHTML = `<tr><td colspan="5">Cargando...</td></tr>`;
+        tablaEspecialesBody.innerHTML = `<p class="text-muted text-center py-3">Cargando...</p>`;
         try {
             const resp = await fetch("/tracking-pendientes/todos");
             const data = await resp.json();
@@ -118,10 +118,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 p.tipo_servicio == 2 || (p.tipo_servicio == 3 && p.estatus === 'recolectado')
             );
             listaEspeciales.forEach(p => paquetesCache[p.id] = p);
-            renderEspeciales();
             cargarMunicipiosDesdeEspeciales(fechaTracking.value);
+            renderEspeciales();
         } catch (err) {
-            tablaEspecialesBody.innerHTML = `<tr><td colspan="6">Error</td></tr>`;
+            tablaEspecialesBody.innerHTML = `<p class="text-danger text-center py-3"><i class="fa fa-exclamation-circle mr-1"></i>Error al cargar</p>`;
         }
     }
 

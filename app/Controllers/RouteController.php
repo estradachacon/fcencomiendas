@@ -22,7 +22,11 @@ class RouteController extends BaseController
         $chk = requerirPermiso('ver_rutas');
         if ($chk !== true) return $chk;
 
-        $data['routes'] = $this->routeModel->findAll();
+        $perPage = (int)($this->request->getGet('per_page') ?? 15);
+
+        $data['routes']  = $this->routeModel->paginate($perPage);
+        $data['pager']   = $this->routeModel->pager;
+        $data['perPage'] = $perPage;
         return view('routes/index', $data);
     }
 

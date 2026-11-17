@@ -442,27 +442,27 @@
 
 <!-- ── MODAL 2: Personalizados ── -->
 <div class="modal fade" id="modalEspeciales" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header modal-hdr-secondary">
                 <h5 class="modal-title"><i class="fa fa-box mr-2"></i>Agregar personalizados</h5>
                 <button class="close" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label class="font-weight-bold">Municipio</label>
-                    <select id="municipioEspecial" class="form-control">
-                        <option value="">Todos los municipios</option>
-                    </select>
+                <div class="form-row">
+                    <div class="form-group col-sm-8 col-md-6">
+                        <label for="municipioEspecial">Municipio</label>
+                        <select id="municipioEspecial" class="form-control">
+                            <option value="">Todos los municipios</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group" hidden>
-                    <label>Filtrar por tipo</label>
-                    <select id="filtro_tipo" class="form-control">
-                        <option value="">Todos</option>
-                        <option value="2">Personalizados</option>
-                        <option value="3">Recolecciones</option>
-                    </select>
-                </div>
+                <!-- filtro_tipo oculto, usado solo por JS -->
+                <select id="filtro_tipo" style="display:none">
+                    <option value="">Todos</option>
+                    <option value="2">Personalizados</option>
+                    <option value="3">Recolecciones</option>
+                </select>
                 <button class="btn btn-sm btn-outline-secondary mb-3" id="selectAllEspeciales">
                     <i class="fa fa-check-square mr-1"></i> Seleccionar / Quitar todos
                 </button>
@@ -478,7 +478,7 @@
 
 <!-- ── MODAL 3: Pendientes de recolecta ── -->
 <div class="modal fade" id="modalPendientes3" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header modal-hdr-success">
                 <h5 class="modal-title"><i class="fa fa-clock mr-2"></i>Paquetes pendientes de recolecta</h5>

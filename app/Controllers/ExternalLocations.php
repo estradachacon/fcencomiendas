@@ -16,7 +16,11 @@ class ExternalLocations extends BaseController
 
     public function index()
     {
-        $data['locations'] = $this->locationModel->findAll();
+        $perPage = (int)($this->request->getGet('per_page') ?? 15);
+
+        $data['locations'] = $this->locationModel->paginate($perPage);
+        $data['pager']     = $this->locationModel->pager;
+        $data['perPage']   = $perPage;
         return view('external_locations/index', $data);
     }
 

@@ -23,7 +23,17 @@ class SolicitudReversionController extends BaseController
             return redirect()->to(base_url('dashboard'))->with('error', 'Sin permiso');
         }
 
-        $data['solicitudes'] = $this->solicitudModel->getSolicitudes();
+        $perPage = (int)($this->request->getGet('per_page') ?? 15);
+
+        $data['solicitudes'] = $this->solicitudModel
+            ->select('reversal_requests.*, packages.id AS package_id, users.user_name AS solicitante_nombre')
+            ->join('packages', 'packages.id = reversal_requests.package_id', 'left')
+            ->join('users',    'users.id = reversal_requests.solicitado_por', 'left')
+            ->orderBy('reversal_requests.created_at', 'DESC')
+            ->paginate($perPage);
+
+        $data['pager']   = $this->solicitudModel->pager;
+        $data['perPage'] = $perPage;
 
         return view('solicitudes/index', $data);
     }
