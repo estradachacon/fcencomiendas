@@ -99,3 +99,6 @@ public/info.php
 .gitignore copy.htaccess
 public/upload/*
 app/Config/firebase.json
+
+*.rar
+*.zip
