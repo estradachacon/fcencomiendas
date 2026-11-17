@@ -12,8 +12,10 @@
 .prf-col-photo { width: 300px; flex-shrink: 0; }
 
 @media (max-width: 767px) {
-    .prf-grid      { flex-direction: column; }
-    .prf-col-photo { width: 100%; order: -1; }   /* foto arriba en mobile */
+    .prf-grid                { flex-direction: column; }
+    .prf-col-photo,
+    .prf-col-form            { width: 100%; }
+    .prf-col-photo           { order: -1; }
 }
 
 /* Avatar */
