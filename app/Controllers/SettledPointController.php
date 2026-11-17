@@ -23,15 +23,17 @@ class SettledPointController extends BaseController
         $chk = requerirPermiso('ver_puntosfijos');
         if ($chk !== true) return $chk;
 
-        $settledPointsModel = new SettledPointModel();
+        $perPage = (int)($this->request->getGet('per_page') ?? 15);
 
-        $settledPoints = $settledPointsModel
+        $settledPoints = $this->settledPointModel
             ->select('settled_points.*, routes.route_name AS route_name')
             ->join('routes', 'routes.id = settled_points.ruta_id')
-            ->findAll();
+            ->paginate($perPage);
 
         $data = [
             'settledPoints' => $settledPoints,
+            'pager'         => $this->settledPointModel->pager,
+            'perPage'       => $perPage,
         ];
         return view('settledpoint/index', $data);
     }
