@@ -222,6 +222,27 @@
 .pkg-card-sub   { font-size: .78rem; color: #6b7280; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pkg-card-monto { flex-shrink: 0; font-weight: 700; font-size: .88rem; color: #083344; }
 
+/* ── Agrupación municipio → colonia (modal personalizados) ── */
+.pkg-group-muni {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 10px; padding: 8px 12px;
+    background: #374151; color: #fff; border-radius: 8px;
+    font-weight: 700; font-size: .88rem;
+}
+.pkg-group-muni:first-child { margin-top: 0; }
+.pkg-group-col {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 2px; padding: 4px 4px 0 10px;
+    border-left: 3px solid #0891b2;
+    font-weight: 600; font-size: .8rem; color: #0c5f78;
+}
+.pkg-group-count {
+    margin-left: auto; font-size: .7rem; font-weight: 700;
+    background: rgba(8,145,178,.15); color: #083344;
+    border-radius: 10px; padding: 1px 8px;
+}
+.pkg-group-muni .pkg-group-count { background: rgba(255,255,255,.2); color: #fff; }
+
 /* ── Modales full-screen en mobile ── */
 @media (max-width: 600px) {
     .modal-dialog { margin: 0 !important; max-width: 100% !important; height: 100%; }
@@ -313,7 +334,7 @@
 }
 
 </style>
-<script src="<?= base_url('backend/assets/js/scripts_newtracking.js') ?>?v=20261116"></script>
+<script src="<?= base_url('backend/assets/js/scripts_newtracking.js') ?>?v=20261117"></script>
 <div class="row">
     <div class="col-md-12">
 

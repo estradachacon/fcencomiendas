@@ -144,11 +144,36 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        const cmp = (a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' });
+        const grupos = {};
         lista.forEach(p => {
+            const muni = p.municipio_nombre || 'Sin municipio';
+            const col  = p.colonia_nombre   || 'Sin colonia';
+            ((grupos[muni] ??= {})[col] ??= []).push(p);
+        });
+
+        Object.keys(grupos).sort(cmp).forEach(muni => {
+            const colonias = grupos[muni];
+            const totalMuni = Object.values(colonias).reduce((n, arr) => n + arr.length, 0);
+            const hMuni = document.createElement("div");
+            hMuni.className = "pkg-group-muni";
+            hMuni.innerHTML = `<i class="fa fa-map-marker-alt mr-1"></i>${muni}<span class="pkg-group-count">${totalMuni}</span>`;
+            tablaEspecialesBody.appendChild(hMuni);
+
+            Object.keys(colonias).sort(cmp).forEach(col => {
+                const hCol = document.createElement("div");
+                hCol.className = "pkg-group-col";
+                hCol.innerHTML = `${col}<span class="pkg-group-count">${colonias[col].length}</span>`;
+                tablaEspecialesBody.appendChild(hCol);
+
+                colonias[col].sort((a, b) => cmp(a.cliente || '', b.cliente || '')).forEach(renderEspecialCard);
+            });
+        });
+    }
+
+    function renderEspecialCard(p) {
             const monto    = isNaN(parseFloat(p.monto)) ? 'Cancelado' : '$' + parseFloat(p.monto).toFixed(2);
-            const destino  = p.tipo_servicio == 2 ? p.destino_personalizado : p.lugar_recolecta_paquete;
-            const ubicParts = [p.municipio_nombre, p.colonia_nombre].filter(Boolean);
-            const sub      = [destino, ubicParts.join(', ')].filter(Boolean).join(' · ');
+            const sub      = (p.tipo_servicio == 2 ? p.destino_personalizado : p.lugar_recolecta_paquete) || '';
             const checked  = paquetesSeleccionados[p.id] ? 'checked' : '';
 
             const card = document.createElement("div");
@@ -177,7 +202,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             tablaEspecialesBody.appendChild(card);
-        });
     }
 
     async function loadPendientes3() {
