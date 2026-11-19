@@ -96,6 +96,9 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {    // Grupo del Da
     $routes->get('cashier/transactions', 'CashierController::transactions');
     $routes->get('cashiers/summary/(:num)', 'CashierController::summary/$1');
     $routes->post('cashiers/close', 'CashierController::close');
+    // Uso único: cerrar sesiones de cajas eliminadas
+    $routes->get('cashier/huerfanas', 'CashierController::huerfanas');
+    $routes->post('cashier/huerfanas/cerrar', 'CashierController::cerrarHuerfana');
 
     // Módulo de mantenimiento de usuarios
     $routes->presenter('users', ['controller' => 'UserController', 'only' => ['index', 'new', 'create', 'edit', 'update']]);

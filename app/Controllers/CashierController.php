@@ -138,6 +138,30 @@ class CashierController extends Controller
             return $this->response->setJSON(['status' => 'error', 'message' => 'ID inválido.']);
         }
 
+        $cashier = $cashierModel->find($id);
+        if (!$cashier) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'La caja no existe.']);
+        }
+
+        $cashier = (array) $cashier;
+        $db = db_connect();
+        $sesionAbierta = $db->table('cashier_sessions')
+            ->where('cashier_id', $id)->where('status', 'open')->countAllResults() > 0;
+
+        if (!empty($cashier['is_open']) || $sesionAbierta) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'No se puede eliminar una caja abierta. Ciérrala primero.']);
+        }
+
+        $sesiones    = $db->table('cashier_sessions')->where('cashier_id', $id)->countAllResults();
+        $movimientos = $db->table('cashier_movements')->where('cashier_id', $id)->countAllResults();
+
+        if ($sesiones > 0 || $movimientos > 0) {
+            return $this->response->setJSON([
+                'status'  => 'error',
+                'message' => "No se puede eliminar: la caja tiene registros ({$sesiones} sesión(es), {$movimientos} movimiento(s)).",
+            ]);
+        }
+
         if ($cashierModel->delete($id)) {
             registrar_bitacora(
                 'Eliminó caja',
@@ -476,5 +500,108 @@ class CashierController extends Controller
         );
 
         return $this->response->setJSON(['success' => true]);
+    }
+
+    // ─── Uso único: sesiones abiertas de cajas que fueron eliminadas ─────────
+
+    private function sesionesHuerfanas(): array
+    {
+        $db = db_connect();
+
+        $sesiones = $db->table('cashier_sessions cs')
+            ->select('cs.*, u.user_name')
+            ->join('cashier c', 'c.id = cs.cashier_id', 'left')
+            ->join('users u', 'u.id = cs.user_id', 'left')
+            ->where('cs.status', 'open')
+            ->where('c.id', null)
+            ->get()->getResultArray();
+
+        foreach ($sesiones as &$s) {
+            $row = $db->table('cashier_movements')
+                ->select("COALESCE(SUM(CASE WHEN type = 'in' THEN amount ELSE 0 END), 0) AS ins, COALESCE(SUM(CASE WHEN type = 'out' THEN amount ELSE 0 END), 0) AS outs", false)
+                ->where('cashier_session_id', $s['id'])
+                ->get()->getRowArray();
+            $s['saldo'] = round((float) $row['ins'] - (float) $row['outs'], 2);
+        }
+
+        return $sesiones;
+    }
+
+    public function huerfanas()
+    {
+        if (!tienePermiso('hacer_corte')) {
+            return redirect()->to(base_url('dashboard'))->with('error', 'Sin permiso');
+        }
+
+        return view('cashier/huerfanas', ['sesiones' => $this->sesionesHuerfanas()]);
+    }
+
+    public function cerrarHuerfana()
+    {
+        helper('transaction');
+
+        if (!tienePermiso('hacer_corte')) {
+            return $this->response->setJSON(['success' => false, 'message' => 'No autorizado'])->setStatusCode(403);
+        }
+
+        $sessionId = (string) $this->request->getPost('session_id');
+        $sesion = current(array_filter($this->sesionesHuerfanas(), fn ($s) => (string) $s['id'] === $sessionId));
+
+        if (!$sesion) {
+            return $this->response->setJSON(['success' => false, 'message' => 'La sesión no existe, ya está cerrada o su caja no fue eliminada.']);
+        }
+
+        $saldo = $sesion['saldo'];
+        $now   = date('Y-m-d H:i:s');
+        $db    = db_connect();
+        $db->transStart();
+
+        $db->table('cashier_sessions')->where('id', $sesion['id'])->update([
+            'status'         => 'closed',
+            'closing_amount' => $saldo,
+            'close_time'     => $now,
+        ]);
+
+        $db->table('cashier_movements')->insert([
+            'cashier_id'         => $sesion['cashier_id'],
+            'cashier_session_id' => $sesion['id'],
+            'user_id'            => session()->get('id'),
+            'branch_id'          => $sesion['branch_id'],
+            'type'               => 'out',
+            'amount'             => $saldo,
+            'balance_after'      => 0,
+            'concept'            => 'Cierre de caja (caja eliminada)',
+            'reference_type'     => 'Reintegración de efectivo',
+            'reference_id'       => $sesion['id'],
+            'created_at'         => $now,
+        ]);
+
+        $db->table('accounts')->where('id', 1)
+            ->set('balance', 'balance + ' . $saldo, false)
+            ->set('cashier_reserv', 'cashier_reserv - ' . $saldo, false)
+            ->update();
+
+        registrarEntrada(
+            1,
+            $saldo,
+            "Cierre de caja eliminada ID {$sesion['cashier_id']} con los valores: {$saldo} - {$sesion['initial_amount']} = " . ($saldo - $sesion['initial_amount']),
+            "Cierre de caja con ID de Sesión {$sesion['id']}",
+            $sesion['id']
+        );
+
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Error al cerrar la sesión. No se aplicó ningún cambio.']);
+        }
+
+        registrar_bitacora(
+            'Cierre de caja eliminada',
+            'Finanzas',
+            "Se cerró la sesión {$sesion['id']} de la caja eliminada {$sesion['cashier_id']}. Reintegrado: \${$saldo}",
+            $sesion['id']
+        );
+
+        return $this->response->setJSON(['success' => true, 'message' => 'Sesión cerrada. Reintegrado: $' . number_format($saldo, 2)]);
     }
 }

@@ -214,12 +214,13 @@
                                 })
                                 .then(response => response.json())
                                 .then(data => {
+                                    const ok = data.status === 'success';
                                     Swal.fire({
-                                        title: data.status === 'success' ? 'Éxito' : 'Error',
+                                        title: ok ? 'Éxito' : 'No se puede eliminar',
                                         text: data.message,
-                                        icon: data.status,
-                                        timer: 2000,
-                                        showConfirmButton: false
+                                        icon: ok ? 'success' : 'error',
+                                        timer: ok ? 2000 : undefined,
+                                        showConfirmButton: !ok
                                     });
                                     if (data.status === 'success') {
                                         const row = button.closest('tr');
