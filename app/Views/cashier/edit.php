@@ -9,6 +9,12 @@
             </div>
 
             <div class="card-body">
+                <?php $errors = session('errors') ?? []; ?>
+                <?php if ($errors): ?>
+                    <div class="alert alert-danger">
+                        <?php foreach ($errors as $e): ?><div><?= esc($e) ?></div><?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
                 <!-- 1. Formulario apuntando al método update -->
                 <form action="<?= base_url('cashiers/update/' . $cashier->id) ?>" method="post">
                     <?= csrf_field() ?>
@@ -18,12 +24,15 @@
                             <label for="name" class="form-label">Nombre de caja</label>
                             <input 
                                 type="text" 
-                                class="form-control" 
-                                id="name" 
-                                name="name" 
-                                value="<?= esc($cashier->name) ?>" 
+                                class="form-control <?= isset($errors['name']) ? 'is-invalid' : '' ?>"
+                                id="name"
+                                name="name"
+                                value="<?= esc(old('name', $cashier->name)) ?>"
                                 required
                             >
+                            <?php if (isset($errors['name'])): ?>
+                                <div class="invalid-feedback"><?= esc($errors['name']) ?></div>
+                            <?php endif; ?>
                         </div>
 
                         <div class="col-md-6 mb-3">

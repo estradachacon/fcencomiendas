@@ -56,10 +56,41 @@ class CashierController extends Controller
         return view('cashier/new', $data);
     }
 
+    private function reglasCaja($id = null): array
+    {
+        $unico = $id === null ? 'is_unique[cashier.name]' : "is_unique[cashier.name,id,{$id}]";
+
+        return [
+            'rules' => [
+                'name'            => "required|min_length[3]|max_length[100]|{$unico}",
+                'initial_balance' => 'required|numeric',
+                'branch_id'       => 'required|integer',
+                'user_id'         => 'required|integer',
+            ],
+            'messages' => [
+                'name' => [
+                    'required'   => 'El nombre de la caja es obligatorio.',
+                    'min_length' => 'El nombre debe tener al menos 3 caracteres.',
+                    'max_length' => 'El nombre no puede pasar de 100 caracteres.',
+                    'is_unique'  => 'Ya existe una caja con ese nombre. Usa un nombre diferente.',
+                ],
+                'initial_balance' => ['required' => 'El monto inicial es obligatorio.', 'numeric' => 'El monto inicial debe ser un número.'],
+                'branch_id'       => ['required' => 'Seleccione una sucursal.', 'integer' => 'Seleccione una sucursal.'],
+                'user_id'         => ['required' => 'Seleccione un usuario.', 'integer' => 'Seleccione un usuario.'],
+            ],
+        ];
+    }
+
     public function create()
     {
         helper(['form']);
         $session = session();
+
+        $v = $this->reglasCaja();
+        if (!$this->validate($v['rules'], $v['messages'])) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
         $data = [
             'name' => $this->request->getPost('name'),
             'initial_balance' => $this->request->getPost('initial_balance'),
@@ -100,12 +131,8 @@ class CashierController extends Controller
     {
         helper(['form']);
         $session = session();
-        if (!$this->validate([
-            'name' => 'required|min_length[3]|max_length[100]',
-            'initial_balance' => 'required|numeric',
-            'branch_id' => 'required|integer',
-            'user_id' => 'required|integer',
-        ])) {
+        $v = $this->reglasCaja((int) $id);
+        if (!$this->validate($v['rules'], $v['messages'])) {
             return redirect()->back()
                 ->withInput()
                 ->with('errors', $this->validator->getErrors());
